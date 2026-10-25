@@ -155,7 +155,7 @@
       </div>
       <div id="invoice_label_row_print" class="row print_only">
         <div class="twelve columns">
-          <H4>{{=it.current?it.current.proforma?"ПРОФОРМА ":"":""}}ФАКТУРА</H4> <H6><span id="number">№ {{!it.current?it.current.number.toString().padStart(10, '0'):''}}</span> от <span id="number">{{!it.current?it.current.date:''}} г.</span></H6>
+          <H4>{{=it.current?it.current.proforma?"ПРОФОРМА ":"":""}}ФАКТУРА</H4> <H6><span id="number">№ {{!it.current?it.current.number.toString().padStart(10, '0'):''}}</span> от <span id="number">{{!it.current?without_year_suffix(it.current.date):''}} г.</span></H6>
         </div>
       </div>
       <div class="row">
@@ -179,19 +179,19 @@
                   <input class="u-full-width non_print" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=i}}" onchange="add_table_row(this)" value="{{!pr.product_name}}">
                   <div class="u-full-width print_only">{{!pr.product_name}}</div>
                 </td>
-                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=i}}" value="{{!pr.product_price}}" onchange="calc_row_amount({{=i}})"></td>
-                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=i}}" value="{{!pr.product_quantity}}" onchange="calc_row_amount({{=i}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=i}}" value="{{!pr.product_price}}" onchange="calc_row_amount(row_index(this))"></td>
+                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=i}}" value="{{!pr.product_quantity}}" onchange="calc_row_amount(row_index(this))"></td>
                 <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=i}}" value="{{!pr.product_unit}}"></td>
-                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=i}}" value="{{!pr.product_amount}}"></td>
+                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=i}}" value="{{!pr.product_amount}}" onchange="update_amounts()"></td>
               </tr>
               {{ last_index = i+1; }}
               {{~}}
               <tr>
                 <td><input class="u-full-width" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=last_index}}" onchange="add_table_row(this)"></td>
-                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=last_index}}" onchange="calc_row_amount({{=last_index}})"></td>
-                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=last_index}}" onchange="calc_row_amount({{=last_index}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=last_index}}" onchange="calc_row_amount(row_index(this))"></td>
+                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=last_index}}" onchange="calc_row_amount(row_index(this))"></td>
                 <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=last_index}}"></td>
-                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=last_index}}"></td>
+                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=last_index}}" onchange="update_amounts()"></td>
               </tr>
             </tbody>
             <tfoot>
@@ -200,7 +200,7 @@
               </tr>
               <tr>
                 <td colspan="4" class="footer-label">Данъчна основа</td>
-                <td><input class="u-full-width" type="text" id="invoice_subtotal" value="{{!inv?inv.invoice_subtotal?inv.invoice_subtotal:'':''}}"></td>
+                <td><input class="u-full-width" type="text" id="invoice_subtotal" readonly tabindex="-1" value="{{!inv?inv.invoice_subtotal?inv.invoice_subtotal:'':''}}"></td>
               </tr>
               <tr>
                 <td colspan="3" class="footer-label">ДДС</td>
@@ -209,7 +209,7 @@
               </tr>
               <tr>
                 <td colspan="4" class="footer-label">Сума за плащане</td>
-                <td><input class="u-full-width" type="text" id="invoice_total" onchange="update_total_amount_verbally();" value="{{!inv?inv.invoice_total?inv.invoice_total:'':''}}"></td>
+                <td><input class="u-full-width" type="text" id="invoice_total" readonly tabindex="-1" value="{{!inv?inv.invoice_total?inv.invoice_total:'':''}}"></td>
               </tr>
               <tr id="vat_exempt_row" class="{{=is_zero_rate(inv?inv.invoice_tax:'20')?'':'hidden'}}">
                 <td colspan="5">
@@ -332,12 +332,40 @@
       auto_grow_textarea(document.getElementById('payment_details'));
     }
 
+    // "1 200,50", "1.200,50" and "1,200.50" all become "1200.50"; a lone comma or dot is the decimal mark
+    function normalize_number_text(value) {
+      var text = String(value).trim().replace(/[\s\u00a0]/g, '');
+      [',', '.'].forEach((sep) => {
+        if(text.split(sep).length > 2) // repeated: thousands separator
+          text = text.split(sep).join('');
+      });
+      if(text.includes(',') && text.includes('.')) // both: the last one is the decimal mark
+        text = text.lastIndexOf(',') > text.lastIndexOf('.') ? text.replace('.', '').replace(',', '.') : text.replace(',', '');
+      return text.replace(',', '.');
+    }
+
+    function parse_amount(value) {
+      return parseFloat(normalize_number_text(value));
+    }
+
+    // rewrites a typed number in the form the rest of the invoice uses, leaving text that is not a number alone
+    function normalize_number_input(el) {
+      if(el && el.value.trim() && !isNaN(parse_amount(el.value)))
+        el.value = normalize_number_text(el.value);
+    }
+
+    function row_index(el) {
+      return parseInt(el.id.split('_').pop());
+    }
+
     function update_amounts() {
       var i=0;
       var subtotal = 0;
+      normalize_number_input(document.getElementById('invoice_tax'));
       while(document.getElementById('product_name_'+i)) {
-        if(document.getElementById('product_amount_'+i).value)
-          subtotal += parseFloat(document.getElementById('product_amount_'+i).value);
+        normalize_number_input(document.getElementById('product_amount_'+i));
+        if(!isNaN(parse_amount(document.getElementById('product_amount_'+i).value)))
+          subtotal += parse_amount(document.getElementById('product_amount_'+i).value);
         i++;
       }
       document.getElementById('invoice_subtotal').value = subtotal.toFixed(2);
@@ -346,7 +374,7 @@
       document.getElementById('vat_exempt_row').classList.toggle('hidden', !is_zero_rate(document.getElementById('invoice_tax').value));
       if(vat_amount) {
         // total is the sum of the displayed (rounded) amounts, so the printed numbers always add up
-        document.getElementById('invoice_total').value = (parseFloat(document.getElementById('invoice_subtotal').value) + parseFloat(vat_amount)).toFixed(2);
+        document.getElementById('invoice_total').value = (parse_amount(document.getElementById('invoice_subtotal').value) + parse_amount(vat_amount)).toFixed(2);
         update_total_amount_verbally();
       }
     }
@@ -357,7 +385,7 @@
 
     // a 0% invoice must state the legal basis for not charging VAT (чл. 114 ЗДДС)
     function is_zero_rate(rate) {
-      return rate !== undefined && rate !== null && String(rate).trim() !== '' && parseFloat(rate) === 0;
+      return rate !== undefined && rate !== null && String(rate).trim() !== '' && parse_amount(rate) === 0;
     }
 
     // bases used on earlier invoices, most recent first, offered as suggestions
@@ -367,14 +395,17 @@
 
     // VAT amount as a 2-decimal string, or '' when the base or the rate is missing
     function calc_vat_amount(subtotal, rate) {
-      if(!subtotal || !rate || isNaN(parseFloat(subtotal)) || isNaN(parseFloat(rate)))
+      if(!subtotal || !rate || isNaN(parse_amount(subtotal)) || isNaN(parse_amount(rate)))
         return '';
-      return round_amount(parseFloat(subtotal) * parseFloat(rate) / 100).toFixed(2);
+      return round_amount(parse_amount(subtotal) * parse_amount(rate) / 100).toFixed(2);
     }
 
     function calc_row_amount(i) {
-      if(document.getElementById('product_name_'+i) && document.getElementById('product_price_'+i).value && document.getElementById('product_quantity_'+i).value)
-        document.getElementById('product_amount_'+i).value = (parseFloat(document.getElementById('product_price_'+i).value) * parseFloat(document.getElementById('product_quantity_'+i).value)).toFixed(2);
+      var price = document.getElementById('product_price_'+i), quantity = document.getElementById('product_quantity_'+i);
+      normalize_number_input(price);
+      normalize_number_input(quantity);
+      if(document.getElementById('product_name_'+i) && price.value && quantity.value && !isNaN(parse_amount(price.value)) && !isNaN(parse_amount(quantity.value)))
+        document.getElementById('product_amount_'+i).value = round_amount(parse_amount(price.value) * parse_amount(quantity.value)).toFixed(2);
       update_amounts();
     }
 
@@ -408,7 +439,7 @@
     function update_total_amount_verbally() {
       var total = document.getElementById('invoice_total').value;
       if(total)
-        document.getElementById('verbally').value = Verbally_bg.convert(total, document.getElementById('currency').value);
+        document.getElementById('verbally').value = Verbally_bg.convert(parse_amount(total), document.getElementById('currency').value);
     }
 
     // saved invoices keep their currency (ones saved without it predate the euro, so BGN); new ones get the default
@@ -441,10 +472,23 @@
       return maxNumber + 1;
     }
 
+    // dd.mm.yyyy; toLocaleDateString('bg-BG') would add " г." and the printout adds another
+    function format_date(date) {
+      return String(date.getDate()).padStart(2, '0') + '.' + String(date.getMonth() + 1).padStart(2, '0') + '.' + date.getFullYear();
+    }
+
+    // dates saved earlier may already end in " г."
+    function without_year_suffix(date) {
+      return String(date).replace(/\s*г\.?\s*$/, '');
+    }
+
     function clone_invoice(form) {
       data.current = null;
       form.number.value = get_next_invoice_number();
-      form.date.value = new Date().toLocaleDateString('bg-BG');
+      form.date.value = format_date(new Date());
+      // fields that belong to one invoice only
+      form.proforma.checked = false;
+      form.due_date.value = '';
       if(form.currency.value == 'BGN')
         convert_form_to_eur(form);
     }
@@ -453,7 +497,7 @@
     const BGN_PER_EUR = 1.95583;
 
     function bgn_to_eur(value) {
-      return isNaN(parseFloat(value)) ? value : round_amount(parseFloat(value) / BGN_PER_EUR).toFixed(2);
+      return isNaN(parse_amount(value)) ? value : round_amount(parse_amount(value) / BGN_PER_EUR).toFixed(2);
     }
 
     // converts the product prices of a cloned BGN invoice and recalculates every amount
@@ -477,6 +521,23 @@
       return /^\d+$/.test(a) && /^\d+$/.test(b) ? parseInt(a, 10) == parseInt(b, 10) : a == b;
     }
 
+    const PRODUCT_FIELDS = ['product_name', 'product_price', 'product_quantity', 'product_unit', 'product_amount'];
+
+    // every product row with at least one field filled in, plus the table row numbers of those missing a name or an amount
+    function read_product_rows(form) {
+      var rows = [], incomplete = [];
+      for(var i = 0; form['product_name_'+i]; i++) {
+        var row = {};
+        PRODUCT_FIELDS.forEach((field) => row[field] = form[field+'_'+i].value);
+        if(!PRODUCT_FIELDS.some((field) => row[field].trim()))
+          continue;
+        rows.push(row);
+        if(!row.product_name.trim() || !row.product_amount.trim())
+          incomplete.push(i + 1);
+      }
+      return {rows: rows, incomplete: incomplete};
+    }
+
     function save_invoice(form) {
       var number = form.number.value.trim();
       if(!number) {
@@ -493,6 +554,10 @@
         form.number.focus();
         return false;
       }
+      var products = read_product_rows(form);
+      if(products.incomplete.length
+          && !confirm('Без наименование или стойност: ред ' + products.incomplete.join(', ') + '. Да запиша ли фактурата въпреки това?'))
+        return false;
       if(is_zero_rate(form.invoice_tax.value) && !form.invoice_tax_exempt_basis.value.trim()
           && !confirm('ДДС е 0%, но не е посочено основание за неначисляване на ДДС. Да запиша ли фактурата въпреки това?'))
         return false;
@@ -527,20 +592,7 @@
       data.current.payment_details = form.payment_details.value;
       data.current.created_by = form.created_by.value;
       data.current.received_by = form.received_by.value;
-      data.current.products = [];
-      var i = 0;
-      while(form['product_name_'+i]) {
-        if(form['product_name_'+i].value && form['product_price_'+i].value && form['product_quantity_'+i].value && form['product_unit_'+i].value && form['product_amount_'+i].value) {
-          var row = {};
-          row.product_name = form['product_name_'+i].value;
-          row.product_price = form['product_price_'+i].value;
-          row.product_quantity = form['product_quantity_'+i].value;
-          row.product_unit = form['product_unit_'+i].value;
-          row.product_amount = form['product_amount_'+i].value;
-          data.current.products.push(row);
-        }
-        i++;
-      }
+      data.current.products = products.rows;
       data.current.project = form.project.value;
       data.current.invoice_subtotal = form.invoice_subtotal.value;
       data.current.invoice_tax = form.invoice_tax.value;

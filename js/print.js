@@ -37,7 +37,9 @@ window.onbeforeprint = (event) => {
     print_form.querySelector("#client_id_no_label").style.width = client_width+'px';
     print_form.querySelector("#client_responsible_label").style.width = client_width+'px';
 
-    print_form.querySelector("#due_date").value = print_form.querySelector("#due_date").value + ' г.';
+    var due_date = print_form.querySelector("#due_date");
+    if(due_date.value.trim())
+        due_date.value = without_year_suffix(due_date.value) + ' г.';
 };
 
 window.onafterprint = (event) => {

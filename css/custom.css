@@ -223,7 +223,7 @@ iframe {
 }
 
 @media screen {
-    #invoice_tax_amount {
+    #invoice_subtotal, #invoice_tax_amount, #invoice_total {
         background-color: #F0F0F0;
     }
 }
