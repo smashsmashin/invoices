@@ -14,19 +14,17 @@ function getSizeOfNonDomElement(domElement)
 }
 
 window.onbeforeprint = (event) => {
-    console.log('Before print');
     var print_form = document.body.appendChild(document.forms[0].cloneNode(true));
-    console.log(print_form);
     print_form.id = 'print_form';
 
-    var suplier_width= Math.max(
+    var supplier_width= Math.max(
         getSizeOfNonDomElement(print_form.querySelector("#supplier_tax_no_label")).width,
         getSizeOfNonDomElement(print_form.querySelector("#supplier_id_no_label")).width,
         getSizeOfNonDomElement(print_form.querySelector("#supplier_responsible_label")).width
     );
-    print_form.querySelector("#supplier_tax_no_label").style.width = suplier_width+'px';
-    print_form.querySelector("#supplier_id_no_label").style.width = suplier_width+'px';
-    print_form.querySelector("#supplier_responsible_label").style.width = suplier_width+'px';
+    print_form.querySelector("#supplier_tax_no_label").style.width = supplier_width+'px';
+    print_form.querySelector("#supplier_id_no_label").style.width = supplier_width+'px';
+    print_form.querySelector("#supplier_responsible_label").style.width = supplier_width+'px';
 
     var client_width= Math.max(
         getSizeOfNonDomElement(print_form.querySelector("#client_tax_no_label")).width,
@@ -43,7 +41,6 @@ window.onbeforeprint = (event) => {
 };
 
 window.onafterprint = (event) => {
-    console.log('After print');
     document.body.removeChild(document.getElementById('print_form'));
 };
 
