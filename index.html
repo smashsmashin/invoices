@@ -470,14 +470,34 @@
       }
     }
 
+    // "5", 5 and "0005" are the same invoice number (all print as 0000000005)
+    function same_invoice_number(a, b) {
+      a = String(a).trim();
+      b = String(b).trim();
+      return /^\d+$/.test(a) && /^\d+$/.test(b) ? parseInt(a, 10) == parseInt(b, 10) : a == b;
+    }
+
     function save_invoice(form) {
+      var number = form.number.value.trim();
+      if(!number) {
+        alert('Въведете номер на фактурата.');
+        form.number.focus();
+        return false;
+      }
+      // checked only for new or renumbered invoices, so duplicates saved before this check can still be edited
+      var existing = !data.current || !same_invoice_number(data.current.number, number)
+        ? data.invoices.find((inv) => inv !== data.current && same_invoice_number(inv.number, number))
+        : undefined;
+      if(existing) {
+        alert('Фактура № ' + existing.number + ' от ' + existing.date + ' вече съществува. Изберете друг номер или отворете съществуващата фактура от списъка, за да я промените.');
+        form.number.focus();
+        return false;
+      }
       if(is_zero_rate(form.invoice_tax.value) && !form.invoice_tax_exempt_basis.value.trim()
           && !confirm('ДДС е 0%, но не е посочено основание за неначисляване на ДДС. Да запиша ли фактурата въпреки това?'))
         return false;
       if(!data.current) {
-        if(data.invoices.find( ({ number }) => number == form.number.value ))
-          console.error("Invoice with this number already exists. Please select it from the list before modifying it!");
-        var new_invoice = {number: form.number.value};
+        var new_invoice = {number: number};
         data.invoices.push(new_invoice);
         sort_invoices_desc(data);
         data.current = new_invoice;
@@ -497,7 +517,7 @@
       data.current.client.id_no = form.client_id_no.value;
       data.current.client.responsible = form.client_responsible.value;
       data.current.proforma = form.proforma.checked;
-      data.current.number = form.number.value;  
+      data.current.number = number;
       data.current.date = form.date.value;
       data.current.currency = String(form.currency.value);
       data.current.verbally = form.verbally.value;
@@ -535,7 +555,7 @@
 
       store_invocies(data);
       data = load_invoices();
-      show_invoice(form.number.value);
+      show_invoice(number);
 
       return false;
     }
