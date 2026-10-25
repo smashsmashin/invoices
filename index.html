@@ -61,10 +61,10 @@
   <!-- Invoices list Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script id="header_tmpl" type="text/x-dot-template">
-    <a href="#invoice_list" class="non_print"><center>{{=it.current?it.current.number:"номер"}} / {{=it.current?it.current.date:"дата"}}</center></a>
+    <a href="#invoice_list" class="non_print"><center>{{!it.current?it.current.number:"номер"}} / {{!it.current?it.current.date:"дата"}}</center></a>
     {{ var backup = backup_status(it); }}
     <div class="non_print backup_status{{=backup.overdue?' overdue':''}}">
-      <center>{{=backup.text}}{{? backup.overdue}} — {{? backup.last_export}}има промени след него, {{?}}<a href="#" onclick="export_data(data); return false;">изтеглете архив</a>{{?}}</center>
+      <center>{{!backup.text}}{{? backup.overdue}} — {{? backup.last_export}}има промени след него, {{?}}<a href="#" onclick="export_data(data); return false;">изтеглете архив</a>{{?}}</center>
     </div>
   </script>
 
@@ -73,7 +73,7 @@
   <script id="inv_list_tmpl" type="text/x-dot-template">
     {{~it.invoices :inv}}
     <div>
-      <a id="inv_{{=inv.number}}" class="inv_link" onclick="show_invoice({{=inv.number}});" href="#">{{=inv.number}} от {{=inv.date}}{{=inv.client?inv.client.name?' - ' + inv.client.name:'':''}}</a>
+      <a id="inv_{{!inv.number}}" class="inv_link" data-number="{{!inv.number}}" onclick="show_invoice(this.dataset.number);" href="#">{{!inv.number}} от {{!inv.date}}{{!inv.client?inv.client.name?' - ' + inv.client.name:'':''}}</a>
     </div>
     {{~}}
   </script>
@@ -87,49 +87,49 @@
       <div class="row">
         <div class="six columns">
           <label for="supplier_name">Изпълнител:</label>
-          <input class="u-full-width" type="text" placeholder="Име" id="supplier_name" value="{{=inv?inv.supplier?inv.supplier.name?inv.supplier.name:supplier.name:supplier.name:supplier.name}}">
+          <input class="u-full-width" type="text" placeholder="Име" id="supplier_name" value="{{!inv?inv.supplier?inv.supplier.name?inv.supplier.name:supplier.name:supplier.name:supplier.name}}">
         </div>
         <div class="six columns">
           <label for="client_name">Клиент:</label>
-          <input class="u-full-width" type="text" placeholder="Име" id="client_name" value="{{=inv?inv.client?inv.client.name?inv.client.name:'':'':''}}">
+          <input class="u-full-width" type="text" placeholder="Име" id="client_name" value="{{!inv?inv.client?inv.client.name?inv.client.name:'':'':''}}">
         </div>
       </div>
       <div class="row">
         <div class="six columns">
-          <textarea class="u-full-width" placeholder="Адрес" id="supplier_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.supplier?inv.supplier.address?inv.supplier.address:supplier.address:supplier.address:supplier.address}}</textarea>
+          <textarea class="u-full-width" placeholder="Адрес" id="supplier_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{!inv?inv.supplier?inv.supplier.address?inv.supplier.address:supplier.address:supplier.address:supplier.address}}</textarea>
         </div>
         <div class="six columns">
-          <textarea class="u-full-width" placeholder="Адрес" id="client_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.client?inv.client.address?inv.client.address:'':'':''}}</textarea>
+          <textarea class="u-full-width" placeholder="Адрес" id="client_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{!inv?inv.client?inv.client.address?inv.client.address:'':'':''}}</textarea>
         </div>
       </div>
       <div class="row">
         <div class="six columns">
           <label for="supplier_tax_no" id="supplier_tax_no_label" class="inline print_only">ДДС №:</label>
-          <input class="u-full-width print-inline" type="text" placeholder="ДДС №" id="supplier_tax_no" value="{{=inv?inv.supplier?inv.supplier.tax_no?inv.supplier.tax_no:supplier.tax_no:supplier.tax_no:supplier.tax_no}}">
+          <input class="u-full-width print-inline" type="text" placeholder="ДДС №" id="supplier_tax_no" value="{{!inv?inv.supplier?inv.supplier.tax_no?inv.supplier.tax_no:supplier.tax_no:supplier.tax_no:supplier.tax_no}}">
         </div>
         <div class="six columns">
           <label for="client_tax_no" id="client_tax_no_label" class="inline print_only">ДДС №:</label>
-          <input class="u-full-width print-inline" type="text" placeholder="ДДС №" id="client_tax_no" value="{{=inv?inv.client?inv.client.tax_no?inv.client.tax_no:'':'':''}}">
+          <input class="u-full-width print-inline" type="text" placeholder="ДДС №" id="client_tax_no" value="{{!inv?inv.client?inv.client.tax_no?inv.client.tax_no:'':'':''}}">
         </div>
       </div>
       <div class="row">
         <div class="six columns">
           <label for="supplier_id_no" id="supplier_id_no_label" class="inline print_only">ИД №:</label>
-          <input class="u-full-width print-inline" type="text" placeholder="ИД №" id="supplier_id_no" value="{{=inv?inv.supplier?inv.supplier.id_no?inv.supplier.id_no:supplier.id_no:supplier.id_no:supplier.id_no}}">
+          <input class="u-full-width print-inline" type="text" placeholder="ИД №" id="supplier_id_no" value="{{!inv?inv.supplier?inv.supplier.id_no?inv.supplier.id_no:supplier.id_no:supplier.id_no:supplier.id_no}}">
         </div>
         <div class="six columns">
           <label for="client_id_no" id="client_id_no_label" class="inline print_only">ИД №:</label>
-          <input class="u-full-width print-inline" type="text" placeholder="ИД №" id="client_id_no" value="{{=inv?inv.client?inv.client.id_no?inv.client.id_no:'':'':''}}">
+          <input class="u-full-width print-inline" type="text" placeholder="ИД №" id="client_id_no" value="{{!inv?inv.client?inv.client.id_no?inv.client.id_no:'':'':''}}">
         </div>
       </div>
       <div class="row">
         <div class="six columns">
           <label for="supplier_responsible" id="supplier_responsible_label" class="inline print_only">М.О.Л.</label>
-          <input class="u-full-width print-inline" type="text" placeholder="М.О.Л." id="supplier_responsible" value="{{=inv?inv.supplier?inv.supplier.responsible?inv.supplier.responsible:supplier.responsible:supplier.responsible:supplier.responsible}}">
+          <input class="u-full-width print-inline" type="text" placeholder="М.О.Л." id="supplier_responsible" value="{{!inv?inv.supplier?inv.supplier.responsible?inv.supplier.responsible:supplier.responsible:supplier.responsible:supplier.responsible}}">
         </div>
         <div class="six columns">
           <label for="client_responsible" id="client_responsible_label" class="inline print_only">М.О.Л.</label>
-          <input class="u-full-width print-inline" type="text" placeholder="М.О.Л." id="client_responsible" value="{{=inv?inv.client?inv.client.responsible?inv.client.responsible:'':'':''}}">
+          <input class="u-full-width print-inline" type="text" placeholder="М.О.Л." id="client_responsible" value="{{!inv?inv.client?inv.client.responsible?inv.client.responsible:'':'':''}}">
         </div>
       </div>
       <div class="row">
@@ -143,10 +143,10 @@
       <div id="invoice_number_row" class="row non_print">
         <div class="three columns">&nbsp;</div>
         <div class="three columns">
-          <input class="u-full-width" type="text" placeholder="Номер" id="number" style="text-align: right;" value="{{=it.current?it.current.number:''}}">
+          <input class="u-full-width" type="text" placeholder="Номер" id="number" style="text-align: right;" value="{{!it.current?it.current.number:''}}">
         </div>
         <div class="three columns">
-          <input class="u-full-width" type="text" placeholder="Дата" id="date" value="{{=it.current?it.current.date:''}}">
+          <input class="u-full-width" type="text" placeholder="Дата" id="date" value="{{!it.current?it.current.date:''}}">
         </div>
         <div class="three columns">
           <input id="proforma" type="checkbox" {{=it.current?it.current.proforma?"checked":"":""}}>
@@ -155,7 +155,7 @@
       </div>
       <div id="invoice_label_row_print" class="row print_only">
         <div class="twelve columns">
-          <H4>{{=it.current?it.current.proforma?"ПРОФОРМА ":"":""}}ФАКТУРА</H4> <H6><span id="number">№ {{=it.current?it.current.number.toString().padStart(10, '0'):''}}</span> от <span id="number">{{=it.current?it.current.date:''}} г.</span></H6>
+          <H4>{{=it.current?it.current.proforma?"ПРОФОРМА ":"":""}}ФАКТУРА</H4> <H6><span id="number">№ {{!it.current?it.current.number.toString().padStart(10, '0'):''}}</span> от <span id="number">{{!it.current?it.current.date:''}} г.</span></H6>
         </div>
       </div>
       <div class="row">
@@ -176,13 +176,13 @@
               {{~it.products :pr :i}}
               <tr>
                 <td>
-                  <input class="u-full-width non_print" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=i}}" onchange="add_table_row(this)" value="{{=pr.product_name}}">
-                  <div class="u-full-width print_only">{{=pr.product_name}}</div>
+                  <input class="u-full-width non_print" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=i}}" onchange="add_table_row(this)" value="{{!pr.product_name}}">
+                  <div class="u-full-width print_only">{{!pr.product_name}}</div>
                 </td>
-                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=i}}" value="{{=pr.product_price}}" onchange="calc_row_amount({{=i}})"></td>
-                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=i}}" value="{{=pr.product_quantity}}" onchange="calc_row_amount({{=i}})"></td>
-                <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=i}}" value="{{=pr.product_unit}}"></td>
-                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=i}}" value="{{=pr.product_amount}}"></td>
+                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=i}}" value="{{!pr.product_price}}" onchange="calc_row_amount({{=i}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=i}}" value="{{!pr.product_quantity}}" onchange="calc_row_amount({{=i}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=i}}" value="{{!pr.product_unit}}"></td>
+                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=i}}" value="{{!pr.product_amount}}"></td>
               </tr>
               {{ last_index = i+1; }}
               {{~}}
@@ -196,20 +196,20 @@
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="12"><input class="u-full-width" type="text" placeholder="Проект" id="project" value="{{=inv?inv.project?inv.project:'':''}}"></td>
+                <td colspan="12"><input class="u-full-width" type="text" placeholder="Проект" id="project" value="{{!inv?inv.project?inv.project:'':''}}"></td>
               </tr>
               <tr>
                 <td colspan="4" class="footer-label">Данъчна основа</td>
-                <td><input class="u-full-width" type="text" id="invoice_subtotal" value="{{=inv?inv.invoice_subtotal?inv.invoice_subtotal:'':''}}"></td>
+                <td><input class="u-full-width" type="text" id="invoice_subtotal" value="{{!inv?inv.invoice_subtotal?inv.invoice_subtotal:'':''}}"></td>
               </tr>
               <tr>
                 <td colspan="3" class="footer-label">ДДС</td>
-                <td><div class="vat_rate"><input class="u-full-width" type="text" id="invoice_tax" onchange="update_amounts()" value="{{=inv?inv.invoice_tax?inv.invoice_tax:'20':'20'}}"><span>%</span></div></td>
-                <td><input class="u-full-width" type="text" id="invoice_tax_amount" readonly tabindex="-1" value="{{=inv?inv.invoice_tax_amount?inv.invoice_tax_amount:calc_vat_amount(inv.invoice_subtotal, inv.invoice_tax):''}}"></td>
+                <td><div class="vat_rate"><input class="u-full-width" type="text" id="invoice_tax" onchange="update_amounts()" value="{{!inv?inv.invoice_tax?inv.invoice_tax:'20':'20'}}"><span>%</span></div></td>
+                <td><input class="u-full-width" type="text" id="invoice_tax_amount" readonly tabindex="-1" value="{{!inv?inv.invoice_tax_amount?inv.invoice_tax_amount:calc_vat_amount(inv.invoice_subtotal, inv.invoice_tax):''}}"></td>
               </tr>
               <tr>
                 <td colspan="4" class="footer-label">Сума за плащане</td>
-                <td><input class="u-full-width" type="text" id="invoice_total" onchange="update_total_amount_verbally();" value="{{=inv?inv.invoice_total?inv.invoice_total:'':''}}"></td>
+                <td><input class="u-full-width" type="text" id="invoice_total" onchange="update_total_amount_verbally();" value="{{!inv?inv.invoice_total?inv.invoice_total:'':''}}"></td>
               </tr>
               <tr id="vat_exempt_row" class="{{=is_zero_rate(inv?inv.invoice_tax:'20')?'':'hidden'}}">
                 <td colspan="5">
@@ -244,7 +244,7 @@
           <label class="inline" for="verbally">Словом</label>
         </div>
         <div class="nine columns">
-          <input class="u-full-width inline" type="text" id="verbally" value="{{=inv?inv.verbally?inv.verbally:'':''}}">
+          <input class="u-full-width inline" type="text" id="verbally" value="{{!inv?inv.verbally?inv.verbally:'':''}}">
         </div>
       </div>
 
@@ -253,7 +253,7 @@
           <label class="inline" for="place">Място на сделката</label>
         </div>
         <div class="nine columns">
-          <input class="u-full-width inline" type="text" id="place" value="{{=inv?inv.place?inv.place:'':''}}">
+          <input class="u-full-width inline" type="text" id="place" value="{{!inv?inv.place?inv.place:'':''}}">
         </div>
       </div>
 
@@ -262,7 +262,7 @@
           <label class="inline" for="due_date">Дата на възникване на данъчното събитие(дата на плащане)</label>
         </div>
         <div class="three columns">
-          <input class="u-full-width inline" type="text" id="due_date" value="{{=inv?inv.due_date?inv.due_date:'':''}}">
+          <input class="u-full-width inline" type="text" id="due_date" value="{{!inv?inv.due_date?inv.due_date:'':''}}">
         </div>
       </div>
 
@@ -284,7 +284,7 @@
           &nbsp;  
         </div>
         <div class="nine columns">
-          <textarea class="u-full-width" placeholder="Детайли за плащането" id="payment_details" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.payment_details?inv.payment_details:data.default_payment_details:data.default_payment_details}}</textarea>
+          <textarea class="u-full-width" placeholder="Детайли за плащането" id="payment_details" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{!inv?inv.payment_details?inv.payment_details:data.default_payment_details:data.default_payment_details}}</textarea>
         </div>
       </div>
 
@@ -295,11 +295,11 @@
       <div class="row">
         <div class="six columns">
           <label class="inline" for="created_by">Съставена от</label>
-          <input class="u-full-width inline" type="text" id="created_by" value="{{=inv?inv.created_by?inv.created_by:'Ивайло Цанов':'Ивайло Цанов'}}">
+          <input class="u-full-width inline" type="text" id="created_by" value="{{!inv?inv.created_by?inv.created_by:'Ивайло Цанов':'Ивайло Цанов'}}">
         </div>
         <div class="six columns">
           <label class="inline" for="received_by">Получена от</label>
-          <input class="u-full-width inline" type="text" id="received_by" value="{{=inv?inv.received_by?inv.received_by:'':''}}">
+          <input class="u-full-width inline" type="text" id="received_by" value="{{!inv?inv.received_by?inv.received_by:'':''}}">
         </div>
       </div>
 
