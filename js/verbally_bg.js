@@ -58,11 +58,11 @@ class Verbally_bg {
     {
         var currency = Verbally_bg.CURRENCIES[currency_code] || Verbally_bg.CURRENCIES.BGN;
         value = Math.round(parseFloat(value)*100)/100;
-        var buf=new StringBuffer();
+        var buf={text: ''}; // shared by the recursive _convert calls, which append to it
         Verbally_bg._convert(buf, Math.floor(value), 0, currency.neuter);
         Verbally_bg.footer(buf, value, currency);
         
-        return buf.toString();
+        return buf.text;
     }
 
     // neuter applies only to the units of the top-level call (power 0): едно/две евро
@@ -70,15 +70,15 @@ class Verbally_bg {
     {
 		if(number==0)
 		{
-			if(buf.length()==0)
-				buf.append(Verbally_bg._0).append(' ');
+			if(buf.text.length==0)
+				buf.text += Verbally_bg._0 + ' ';
 			
 			return;
 		}
 		
 		if(number >= 1e12)
 		{
-			buf.append(Verbally_bg.TOO_BIG);
+			buf.text += Verbally_bg.TOO_BIG;
 			return;
 		}
 		
@@ -88,7 +88,7 @@ class Verbally_bg {
 			
 			Verbally_bg._convert(buf,number/1e9, 9);
 			number=Math.round(number%1e9);
-			buf.append(plural?Verbally_bg.BILLIONS:Verbally_bg.BILLION).append(' ');
+			buf.text += (plural?Verbally_bg.BILLIONS:Verbally_bg.BILLION) + ' ';
 		}
 		
 		if(number>=1e6)
@@ -97,27 +97,27 @@ class Verbally_bg {
 			
 			Verbally_bg._convert(buf,number/1e6, 6);
 			number=Math.round(number%1e6);
-			buf.append(plural?Verbally_bg.MILLIONS:Verbally_bg.MILLION).append(' ');
+			buf.text += (plural?Verbally_bg.MILLIONS:Verbally_bg.MILLION) + ' ';
 		}
 		
 		if(number>=1e3)
 		{
 			var plural=number>=2e3;
 			
-			var andPos=buf.length();
+			var andPos=buf.text.length;
 			
 			if(plural)
                 Verbally_bg._convert(buf,number/1e3, 3);
 			number=Math.round(number%1e3);
-			buf.append(plural?Verbally_bg.THOUSANDS:Verbally_bg.THOUSAND).append(' ');
+			buf.text += (plural?Verbally_bg.THOUSANDS:Verbally_bg.THOUSAND) + ' ';
 			
 			if(!plural && Math.floor(number)==0 && andPos>0)
-				buf.insert(andPos,Verbally_bg.AND).insert(andPos+1,' ');
+				buf.text = buf.text.slice(0, andPos) + Verbally_bg.AND + ' ' + buf.text.slice(andPos);
 		}
 		
 		if(number>=1e2)
 		{
-			var andPos=buf.length();
+			var andPos=buf.text.length;
 			
 			var n=Math.floor(number/1e2);
 			var plural=number>=2e2;
@@ -126,114 +126,114 @@ class Verbally_bg {
 			switch(n)
 			{
 				case 1:
-					buf.append(Verbally_bg._100);
+					buf.text += Verbally_bg._100;
 					break;
 				case 2:
 				case 3:
-					buf.append(Verbally_bg.LO_100);
+					buf.text += Verbally_bg.LO_100;
 					break;
 				default:
-					buf.append(Verbally_bg.HI_100);
+					buf.text += Verbally_bg.HI_100;
 			}
-			buf.append(' ');
+			buf.text += ' ';
 			
 			number=Math.round(number%1e2);
 			
 			if(Math.floor(number)==0 && andPos>0)
-				buf.insert(andPos,Verbally_bg.AND).insert(andPos+1,' ');
+				buf.text = buf.text.slice(0, andPos) + Verbally_bg.AND + ' ' + buf.text.slice(andPos);
 		}
 		
 		if(number>=20)
 		{
-			var andPos=buf.length();
+			var andPos=buf.text.length;
 			
 			Verbally_bg._convert(buf, number/10, 1);
 			number=Math.round(number%10);
-			buf.append(Verbally_bg._10).append(' ');
+			buf.text += Verbally_bg._10 + ' ';
 			
 			if(Math.floor(number)==0 && andPos>0)
-				buf.insert(andPos,Verbally_bg.AND).insert(andPos+1,' ');
+				buf.text = buf.text.slice(0, andPos) + Verbally_bg.AND + ' ' + buf.text.slice(andPos);
 		}
 		
-		if(number>0 && buf.length()>0 && power%3==0)
-			buf.append(Verbally_bg.AND).append(' ');
+		if(number>0 && buf.text.length>0 && power%3==0)
+			buf.text += Verbally_bg.AND + ' ';
 		
 		switch(Math.floor(number))
 		{
 			case 1:
-				buf.append(power==3?Verbally_bg._1x:power==0 && neuter?Verbally_bg._1n:Verbally_bg._1);
+				buf.text += (power==3?Verbally_bg._1x:power==0 && neuter?Verbally_bg._1n:Verbally_bg._1);
 				break;
 			case 2:
-				buf.append(power==2 || power==3 || power==0 && neuter?Verbally_bg._2x:Verbally_bg._2);
+				buf.text += (power==2 || power==3 || power==0 && neuter?Verbally_bg._2x:Verbally_bg._2);
 				break;
 			case 3:
-				buf.append(Verbally_bg._3);
+				buf.text += Verbally_bg._3;
 				break;
 			case 4:
-				buf.append(Verbally_bg._4);
+				buf.text += Verbally_bg._4;
 				break;
 			case 5:
-				buf.append(Verbally_bg._5);
+				buf.text += Verbally_bg._5;
 				break;
 			case 6:
-				buf.append(Verbally_bg._6);
+				buf.text += Verbally_bg._6;
 				break;
 			case 7:
-				buf.append(Verbally_bg._7);
+				buf.text += Verbally_bg._7;
 				break;
 			case 8:
-				buf.append(Verbally_bg._8);
+				buf.text += Verbally_bg._8;
 				break;
 			case 9:
-				buf.append(Verbally_bg._9);
+				buf.text += Verbally_bg._9;
 				break;
 			case 10:
-				buf.append(Verbally_bg._10);
+				buf.text += Verbally_bg._10;
 				break;
 			case 11:
-				buf.append(Verbally_bg._11);
+				buf.text += Verbally_bg._11;
 				break;
 			case 12:
-				buf.append(Verbally_bg._12);
+				buf.text += Verbally_bg._12;
 				break;
 			case 13:
-				buf.append(Verbally_bg._13);
+				buf.text += Verbally_bg._13;
 				break;
 			case 14:
-				buf.append(Verbally_bg._14);
+				buf.text += Verbally_bg._14;
 				break;
 			case 15:
-				buf.append(Verbally_bg._15);
+				buf.text += Verbally_bg._15;
 				break;
 			case 16:
-				buf.append(Verbally_bg._16);
+				buf.text += Verbally_bg._16;
 				break;
 			case 17:
-				buf.append(Verbally_bg._17);
+				buf.text += Verbally_bg._17;
 				break;
 			case 18:
-				buf.append(Verbally_bg._18);
+				buf.text += Verbally_bg._18;
 				break;
 			case 19:
-				buf.append(Verbally_bg._19);
+				buf.text += Verbally_bg._19;
 				break;
 		}
 		
 		if(number>0 && power%3==0)
-			buf.append(' ');
+			buf.text += ' ';
     }
 
     static footer(buf, number, currency)
 	{
-		// if(buf.length()>0 && buf.charAt(buf.length()-1)!=' ')
-		// 	buf.append(' ');
+		// if(buf.text.length>0 && buf.charAt(buf.text.length-1)!=' ')
+		// 	buf.text += ' ';
 		
-		buf.append(Math.floor(number) == 1 ? currency.one : currency.many).append(' ').append(Verbally_bg.AND).append(' ');
+		buf.text += (Math.floor(number) == 1 ? currency.one : currency.many) + ' ' + Verbally_bg.AND + ' ';
 
         var cents = Math.round(number*100)%100; // round, not floor: 1.15*100 is 114.999...
 		if(cents<10)
-			buf.append('0');
-		buf.append(cents).append(' ').append(cents == 1 ? currency.cent : currency.cents);
+			buf.text += '0';
+		buf.text += cents + ' ' + (cents == 1 ? currency.cent : currency.cents);
 	}
 }
 

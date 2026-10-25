@@ -47,26 +47,26 @@ class Verbally_en {
     static convert(value)
     {
         value = Math.round(parseFloat(value)*100)/100;
-        var buf=new StringBuffer();
+        var buf={text: ''}; // shared by the recursive _convert calls, which append to it
         Verbally_en._convert(buf, Math.floor(value), 0);
         Verbally_en.footer(buf, value);
         
-        return buf.toString();
+        return buf.text;
     }
 
     static _convert(buf, number)
     {
         if(number==0)
         {
-            if(buf.length()==0)
-                buf.append(Verbally_en._0).append(' ');
+            if(buf.text.length==0)
+                buf.text += Verbally_en._0 + ' ';
             
             return;
         }
         
         if(number >= 1e24)
         {
-            buf.append(TOO_BIG);
+            buf.text += TOO_BIG;
             return;
         }
         
@@ -74,31 +74,31 @@ class Verbally_en {
         {
             Verbally_en._convert(buf, number/1e12);
             number=Math.round(number%1e12);
-            buf.append(Verbally_en.BILLION).append(' ');
+            buf.text += Verbally_en.BILLION + ' ';
         }
         
         if(number>=1e6)
         {
             Verbally_en._convert(buf, number/1e6);
             number=Math.round(number%1e6);
-            buf.append(Verbally_en.MILLION).append(' ');
+            buf.text += Verbally_en.MILLION + ' ';
         }
         
         if(number>=1e3)
         {
             Verbally_en._convert(buf, number/1e3);
             number=Math.round(number%1e3);
-            buf.append(Verbally_en.THOUSAND).append(' ');
+            buf.text += Verbally_en.THOUSAND + ' ';
         }
         
         if(number>=1e2)
         {
             Verbally_en._convert(buf, number/1e2);
             number=Math.round(number%1e2);
-            buf.append(Verbally_en._100).append(' ');
+            buf.text += Verbally_en._100 + ' ';
             
             if(number>0)
-                buf.append(Verbally_en.AND).append(' ');
+                buf.text += Verbally_en.AND + ' ';
         }
         
         if(number>=20)
@@ -106,107 +106,107 @@ class Verbally_en {
             switch(Math.floor(number/10))
             {
                 case 2:
-                    buf.append(Verbally_en._20);
+                    buf.text += Verbally_en._20;
                     break;
                 case 3:
-                    buf.append(Verbally_en._30);
+                    buf.text += Verbally_en._30;
                     break;
                 case 4:
-                    buf.append(Verbally_en._40);
+                    buf.text += Verbally_en._40;
                     break;
                 case 5:
-                    buf.append(Verbally_en._50);
+                    buf.text += Verbally_en._50;
                     break;
                 case 6:
-                    buf.append(Verbally_en._60);
+                    buf.text += Verbally_en._60;
                     break;
                 case 7:
-                    buf.append(Verbally_en._70);
+                    buf.text += Verbally_en._70;
                     break;
                 case 8:
-                    buf.append(Verbally_en._80);
+                    buf.text += Verbally_en._80;
                     break;
                 case 9:
-                    buf.append(Verbally_en._90);
+                    buf.text += Verbally_en._90;
                     break;
             }
             number=number%10;
             if(number>0)
-                buf.append(' ');
+                buf.text += ' ';
         }
         
         switch(Math.floor(number))
         {
             case 1:
-                buf.append(Verbally_en._1);
+                buf.text += Verbally_en._1;
                 break;
             case 2:
-                buf.append(Verbally_en._2);
+                buf.text += Verbally_en._2;
                 break;
             case 3:
-                buf.append(Verbally_en._3);
+                buf.text += Verbally_en._3;
                 break;
             case 4:
-                buf.append(Verbally_en._4);
+                buf.text += Verbally_en._4;
                 break;
             case 5:
-                buf.append(Verbally_en._5);
+                buf.text += Verbally_en._5;
                 break;
             case 6:
-                buf.append(Verbally_en._6);
+                buf.text += Verbally_en._6;
                 break;
             case 7:
-                buf.append(Verbally_en._7);
+                buf.text += Verbally_en._7;
                 break;
             case 8:
-                buf.append(Verbally_en._8);
+                buf.text += Verbally_en._8;
                 break;
             case 9:
-                buf.append(Verbally_en._9);
+                buf.text += Verbally_en._9;
                 break;
             case 10:
-                buf.append(Verbally_en._10);
+                buf.text += Verbally_en._10;
                 break;
             case 11:
-                buf.append(Verbally_en._11);
+                buf.text += Verbally_en._11;
                 break;
             case 12:
-                buf.append(Verbally_en._12);
+                buf.text += Verbally_en._12;
                 break;
             case 13:
-                buf.append(Verbally_en._13);
+                buf.text += Verbally_en._13;
                 break;
             case 14:
-                buf.append(Verbally_en._14);
+                buf.text += Verbally_en._14;
                 break;
             case 15:
-                buf.append(Verbally_en._15);
+                buf.text += Verbally_en._15;
                 break;
             case 16:
-                buf.append(Verbally_en._16);
+                buf.text += Verbally_en._16;
                 break;
             case 17:
-                buf.append(Verbally_en._17);
+                buf.text += Verbally_en._17;
                 break;
             case 18:
-                buf.append(Verbally_en._18);
+                buf.text += Verbally_en._18;
                 break;
             case 19:
-                buf.append(Verbally_en._19);
+                buf.text += Verbally_en._19;
                 break;
         }
-        buf.append(' ');
+        buf.text += ' ';
         
     }
 
 	static footer(buf, number)
 	{
-		buf.append(Verbally_en.CURRENCY).append(' ').append(Verbally_en.AND).append(' ');
+		buf.text += Verbally_en.CURRENCY + ' ' + Verbally_en.AND + ' ';
 		
         var cents = Math.round(number*100)%100; // round, not floor: 1.15*100 is 114.999...
 		if(cents<10)
-			buf.append('0');
-		buf.append(cents).append(' ').append(Verbally_en.CURRENCY_HUNDREDS);
+			buf.text += '0';
+		buf.text += cents + ' ' + Verbally_en.CURRENCY_HUNDREDS;
 	}
 }
 

@@ -89,9 +89,25 @@ function select_payment_method(option) {
   return option && method.toUpperCase() == option.toUpperCase() ? 'selected' : 'ignored';
 }
 
+// the header shows the number and date in the form, which differ from the saved ones after a Clone or an edit
+function refresh_header(form) {
+  render_header({invoices: data.invoices, current: {number: form.number.value, date: form.date.value}});
+}
+
 function mark_selected_invoice (inv_id) {
   Array.from(document.querySelectorAll('.inv_link.selected')).forEach((el) => el.classList.remove('selected'));
   document.getElementById('inv_'+inv_id).classList.add('selected');
+}
+
+// true while the form has edits that are not saved yet; parse_invoices() clears it
+var form_dirty = false;
+
+// opening another invoice replaces the form; returning false keeps the list open
+function open_invoice(number) {
+  if(form_dirty && !confirm('Има незаписани промени. Да ги загубя ли?'))
+    return false;
+  show_invoice(number);
+  return true;
 }
 
 function show_invoice(value) {
@@ -118,6 +134,10 @@ function clone_invoice(form) {
   form.due_date.value = '';
   if(form.currency.value == 'BGN')
     convert_form_to_eur(form);
+  // the clone exists only in the form until it is saved
+  form_dirty = true;
+  refresh_header(form);
+  document.querySelectorAll('.inv_link.selected').forEach((el) => el.classList.remove('selected'));
 }
 
 // converts the product prices of a cloned BGN invoice and recalculates every amount
@@ -217,8 +237,24 @@ function save_invoice(form) {
   store_invoices(data);
   data = load_invoices();
   show_invoice(number);
+  show_message('Фактура № ' + number + ' е записана.');
 
   return false;
+}
+
+// a short note at the bottom of the screen that disappears by itself
+function show_message(text) {
+  var message = document.getElementById('message');
+  if(!message) {
+    message = document.createElement('div');
+    message.id = 'message';
+    message.className = 'non_print';
+    document.body.appendChild(message);
+  }
+  message.textContent = text;
+  message.classList.add('visible');
+  clearTimeout(show_message.timer);
+  show_message.timer = setTimeout(() => message.classList.remove('visible'), 2500);
 }
 
 function auto_grow_textarea(textField)
