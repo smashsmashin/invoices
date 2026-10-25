@@ -62,6 +62,10 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script id="header_tmpl" type="text/x-dot-template">
     <a href="#invoice_list" class="non_print"><center>{{=it.current?it.current.number:"номер"}} / {{=it.current?it.current.date:"дата"}}</center></a>
+    {{ var backup = backup_status(it); }}
+    <div class="non_print backup_status{{=backup.overdue?' overdue':''}}">
+      <center>{{=backup.text}}{{? backup.overdue}} — {{? backup.last_export}}има промени след него, {{?}}<a href="#" onclick="export_data(data); return false;">изтеглете архив</a>{{?}}</center>
+    </div>
   </script>
 
   <!-- Invoices list Layout
@@ -79,12 +83,6 @@
   <script id="inv_tmpl" type="text/x-dot-template">
     {{ var inv = it.current; }}
     {{ var supplier = it.supplier; }}
-    <!-- <div class="row">
-      <div class="twelve columns">
-        <button class="button" onclick="export_data(data)">Export</button>
-        <button class="button-primary" onclick="store_invocies(data)">Persist</button>
-      </div>
-    </div> -->
     <form onsubmit="return false">
       <div class="row">
         <div class="six columns">
@@ -205,12 +203,24 @@
                 <td><input class="u-full-width" type="text" id="invoice_subtotal" value="{{=inv?inv.invoice_subtotal?inv.invoice_subtotal:'':''}}"></td>
               </tr>
               <tr>
-                <td colspan="4" class="footer-label">Данък (%)</td>
-                <td><input class="u-full-width" type="text" id="invoice_tax" onchange="update_amounts()" value="{{=inv?inv.invoice_tax?inv.invoice_tax:'20':'20'}}"></td>
+                <td colspan="3" class="footer-label">ДДС</td>
+                <td><div class="vat_rate"><input class="u-full-width" type="text" id="invoice_tax" onchange="update_amounts()" value="{{=inv?inv.invoice_tax?inv.invoice_tax:'20':'20'}}"><span>%</span></div></td>
+                <td><input class="u-full-width" type="text" id="invoice_tax_amount" readonly tabindex="-1" value="{{=inv?inv.invoice_tax_amount?inv.invoice_tax_amount:calc_vat_amount(inv.invoice_subtotal, inv.invoice_tax):''}}"></td>
               </tr>
               <tr>
                 <td colspan="4" class="footer-label">Сума за плащане</td>
                 <td><input class="u-full-width" type="text" id="invoice_total" onchange="update_total_amount_verbally();" value="{{=inv?inv.invoice_total?inv.invoice_total:'':''}}"></td>
+              </tr>
+              <tr id="vat_exempt_row" class="{{=is_zero_rate(inv?inv.invoice_tax:'20')?'':'hidden'}}">
+                <td colspan="5">
+                  <label class="inline" for="invoice_tax_exempt_basis">Основание за неначисляване на ДДС</label>
+                  <input class="u-full-width" type="text" id="invoice_tax_exempt_basis" list="tax_exempt_bases" placeholder="напр. чл. 21, ал. 2 от ЗДДС" value="{{!inv?inv.invoice_tax_exempt_basis||'':''}}">
+                  <datalist id="tax_exempt_bases">
+                    {{~known_tax_exempt_bases(it) :basis}}
+                    <option value="{{!basis}}">
+                    {{~}}
+                  </datalist>
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -301,6 +311,9 @@
         <div class="six columns">
           <input class="button" type="button" value="Clone" onclick="clone_invoice(this.form)">
           <a href="#invoices" class="button">Invoices</a>
+          <input class="button" type="button" value="Export" onclick="export_data(data)">
+          <input class="button" type="button" value="Import" onclick="document.getElementById('import_file_input').click()">
+          <input type="file" id="import_file_input" accept=".json,application/json" style="display: none;" onchange="import_file(this.files[0]); this.value = '';">
         </div>
         <div class="six columns">
           <input class="u-pull-right button-primary" type="button" value="Save" onclick="save_invoice(this.form)">
@@ -328,10 +341,35 @@
         i++;
       }
       document.getElementById('invoice_subtotal').value = subtotal.toFixed(2);
-      if(document.getElementById('invoice_subtotal').value && document.getElementById('invoice_tax').value) {
-        document.getElementById('invoice_total').value = (parseFloat(document.getElementById('invoice_subtotal').value) * (100 + parseFloat(document.getElementById('invoice_tax').value)) / 100).toFixed(2);
+      var vat_amount = calc_vat_amount(document.getElementById('invoice_subtotal').value, document.getElementById('invoice_tax').value);
+      document.getElementById('invoice_tax_amount').value = vat_amount;
+      document.getElementById('vat_exempt_row').classList.toggle('hidden', !is_zero_rate(document.getElementById('invoice_tax').value));
+      if(vat_amount) {
+        // total is the sum of the displayed (rounded) amounts, so the printed numbers always add up
+        document.getElementById('invoice_total').value = (parseFloat(document.getElementById('invoice_subtotal').value) + parseFloat(vat_amount)).toFixed(2);
         update_total_amount_verbally();
       }
+    }
+
+    function round_amount(value) {
+      return Math.round((value + Number.EPSILON) * 100) / 100;
+    }
+
+    // a 0% invoice must state the legal basis for not charging VAT (чл. 114 ЗДДС)
+    function is_zero_rate(rate) {
+      return rate !== undefined && rate !== null && String(rate).trim() !== '' && parseFloat(rate) === 0;
+    }
+
+    // bases used on earlier invoices, most recent first, offered as suggestions
+    function known_tax_exempt_bases(data) {
+      return [...new Set(data.invoices.map((inv) => inv.invoice_tax_exempt_basis).filter(Boolean))];
+    }
+
+    // VAT amount as a 2-decimal string, or '' when the base or the rate is missing
+    function calc_vat_amount(subtotal, rate) {
+      if(!subtotal || !rate || isNaN(parseFloat(subtotal)) || isNaN(parseFloat(rate)))
+        return '';
+      return round_amount(parseFloat(subtotal) * parseFloat(rate) / 100).toFixed(2);
     }
 
     function calc_row_amount(i) {
@@ -406,6 +444,9 @@
     }
 
     function save_invoice(form) {
+      if(is_zero_rate(form.invoice_tax.value) && !form.invoice_tax_exempt_basis.value.trim()
+          && !confirm('ДДС е 0%, но не е посочено основание за неначисляване на ДДС. Да запиша ли фактурата въпреки това?'))
+        return false;
       if(!data.current) {
         if(data.invoices.find( ({ number }) => number == form.number.value ))
           console.error("Invoice with this number already exists. Please select it from the list before modifying it!");
@@ -456,6 +497,8 @@
       data.current.project = form.project.value;
       data.current.invoice_subtotal = form.invoice_subtotal.value;
       data.current.invoice_tax = form.invoice_tax.value;
+      data.current.invoice_tax_amount = form.invoice_tax_amount.value;
+      data.current.invoice_tax_exempt_basis = is_zero_rate(form.invoice_tax.value) ? form.invoice_tax_exempt_basis.value.trim() : '';
       data.current.invoice_total = form.invoice_total.value;
 
       console.log(form.currency.value);
@@ -516,33 +559,93 @@
 
     function store_invocies(data) {
       localStorage.setItem(STORAGE_NAME, JSON.stringify(data));
+      localStorage.setItem(LAST_CHANGE_NAME, Date.now());
     }
 
+    // backup (export / import)
+    // -----------------------
+
+    const LAST_CHANGE_NAME = STORAGE_NAME + ' last change';
+    const LAST_EXPORT_NAME = STORAGE_NAME + ' last export';
+
+    function backup_status(data) {
+      var last_change = parseInt(localStorage.getItem(LAST_CHANGE_NAME)) || 0;
+      var last_export = parseInt(localStorage.getItem(LAST_EXPORT_NAME)) || 0;
+      return {
+        last_export: last_export,
+        text:last_export ? 'Последен архив: ' + new Date(last_export).toLocaleString('bg-BG') : 'Няма архив',
+        overdue: last_export ? last_change > last_export : data.invoices.length > 0
+      };
+    }
+
+    function render_header(data) {
+      document.getElementById('header').innerHTML = header_parse_fn(data);
+    }
+
+    // Downloads the saved invoices (not unsaved form edits) as a dated JSON file
     function export_data(data) {
-      window.open(URL.createObjectURL(
-        new File([JSON.stringify(data, undefined, 2)], STORAGE_NAME + ".json", {
-          type: 'data:text/json;charset=utf-8'}
-        )
-      ));
+      var json = JSON.stringify({exported_at: new Date().toISOString(), invoices: data.invoices}, undefined, 2);
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([json], {type: 'application/json'}));
+      link.download = 'it-bulgaria-invoices-' + new Date().toLocaleDateString('sv-SE') + '.json'; // sv-SE gives YYYY-MM-DD
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+      localStorage.setItem(LAST_EXPORT_NAME, Date.now());
+      render_header(data);
     }
 
-    function import_data(targetEl, callback) {
+    function import_file(file) {
+      if(!file)
+        return;
+
+      var reader = new FileReader();
+      reader.onload = function() {
+        var obj;
+        try {
+          obj = JSON.parse(this.result);
+        } catch(e) {
+          alert('"' + file.name + '" не е валиден JSON файл: ' + e.message);
+          return;
+        }
+        if(!obj || !Array.isArray(obj.invoices) || obj.invoices.some((inv) => !inv || inv.number == undefined)) {
+          alert('"' + file.name + '" не съдържа фактури.');
+          return;
+        }
+        if(!confirm('Да заменя ли текущите ' + data.invoices.length + ' фактури с ' + obj.invoices.length + ' от "' + file.name + '"?'
+            + (data.invoices.length ? '\n\nПреди замяната текущите фактури ще бъдат изтеглени като архив.' : '')))
+          return;
+
+        // keep a file copy of what is about to be overwritten
+        if(data.invoices.length)
+          export_data(data);
+
+        store_invocies({invoices: obj.invoices});
+        // the stored data now matches a file on disk
+        localStorage.setItem(LAST_EXPORT_NAME, Date.now());
+        data = load_invoices();
+        parse_invoices(data);
+      };
+      reader.readAsText(file);
+    }
+
+    function enable_drop_import(targetEl) {
       // disable default drag & drop functionality
       targetEl.addEventListener('dragenter', function(e){ e.preventDefault(); });
       targetEl.addEventListener('dragover',  function(e){ e.preventDefault(); });
 
       targetEl.addEventListener('drop', function(event) {
-
-          var reader = new FileReader();
-          reader.onloadend = function() {
-              var data = JSON.parse(this.result);
-              callback(data);
-          };
-
-          reader.readAsText(event.dataTransfer.files[0]);    
-          event.preventDefault();
+        event.preventDefault();
+        if(event.dataTransfer.files.length)
+          import_file(event.dataTransfer.files[0]);
       });
     }
+
+    // ask the browser not to evict localStorage under storage pressure
+    if(navigator.storage && navigator.storage.persist)
+      navigator.storage.persist();
   </script>
 
 <!-- Data
@@ -596,7 +699,7 @@
     var list_parse_fn = doT.template(document.getElementById('inv_list_tmpl').innerHTML, undefined, def);
     var inv_parse_fn = doT.template(document.getElementById('inv_tmpl').innerHTML, undefined, def);
     function parse_invoices(data) {
-      document.getElementById('header').innerHTML = header_parse_fn(data);
+      render_header(data);
       document.getElementById('container').innerHTML = inv_parse_fn(data);
       document.getElementById('invoice_list').innerHTML = list_parse_fn(data);
       auto_grow_textarea(document.getElementById('supplier_address'));
@@ -606,13 +709,7 @@
 
     parse_invoices(data);
 
-    import_data(
-      document.body,
-      function(obj) {
-        data = obj;
-        parse_invoices(data);
-      }
-    );    
+    enable_drop_import(document.body);
 
   </script>
 

@@ -195,3 +195,39 @@ iframe {
         height: 200px;
     }
 }
+.backup_status {
+    font-size: 1.2rem;
+    padding: 2px 0;
+}
+
+.backup_status.overdue {
+    background-color: #B03A2E;
+}
+
+.backup_status.overdue a {
+    color: white;
+    font-weight: bold;
+}
+
+.vat_rate {
+    display: flex;
+    align-items: center;
+}
+
+.vat_rate input {
+    text-align: right;
+}
+
+.vat_rate span {
+    padding-left: 5px;
+}
+
+@media screen {
+    #invoice_tax_amount {
+        background-color: #F0F0F0;
+    }
+}
+
+.hidden {
+    display: none;
+}
