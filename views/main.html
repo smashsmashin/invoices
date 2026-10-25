@@ -1,0 +1,220 @@
+<div id="container" class="container" style="margin-top: 20px;">
+    <div class="row">
+      <div id="invice_list" class="two columns" style="border-right: 1px solid lightgray">
+        {{~it.invoices :inv}}
+        <div>
+          <a id="inv_{{=inv.number}}" class="inv_link" onclick="show_invoice({{=inv.number}});" href="#">{{=inv.number}} от {{=inv.date}}{{=inv.client?inv.client.name?' - ' + inv.client.name:'':''}}</a>
+        </div>
+        {{~}}
+      </div>
+      <div class="ten columns">
+        {{ var inv = it.current; }}
+        {{ var supplier = it.supplier; }}
+        <!-- <div class="row">
+          <div class="twelve columns">
+            <button class="button" onclick="export_data(data)">Export</button>
+            <button class="button-primary" onclick="store_invocies(data)">Persist</button>
+          </div>
+        </div> -->
+        <form onsubmit="return false">
+          <div class="row">
+            <div class="six columns">
+              <label for="supplier_name">Изпълнител:</label>
+              <input class="u-full-width" type="text" placeholder="Име" id="supplier_name" value="{{=inv?inv.supplier?inv.supplier.name?inv.supplier.name:supplier.name:supplier.name:supplier.name}}">
+            </div>
+            <div class="six columns">
+              <label for="client_name">Клиент:</label>
+              <input class="u-full-width" type="text" placeholder="Име" id="client_name" value="{{=inv?inv.client?inv.client.name?inv.client.name:'':'':''}}">
+            </div>
+          </div>
+          <div class="row">
+            <div class="six columns">
+              <textarea class="u-full-width" placeholder="Адрес" id="supplier_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.supplier?inv.supplier.address?inv.supplier.address:supplier.address:supplier.address:supplier.address}}</textarea>
+            </div>
+            <div class="six columns">
+              <textarea class="u-full-width" placeholder="Адрес" id="client_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.client?inv.client.address?inv.client.address:'':'':''}}</textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="six columns">
+              <input class="u-full-width" type="text" placeholder="ДДС №" id="supplier_tax_no" value="{{=inv?inv.supplier?inv.supplier.tax_no?inv.supplier.tax_no:supplier.tax_no:supplier.tax_no:supplier.tax_no}}">
+            </div>
+            <div class="six columns">
+              <input class="u-full-width" type="text" placeholder="ДДС №" id="client_tax_no" value="{{=inv?inv.client?inv.client.tax_no?inv.client.tax_no:'':'':''}}">
+            </div>
+          </div>
+          <div class="row">
+            <div class="six columns">
+              <input class="u-full-width" type="text" placeholder="ИД №" id="supplier_id_no" value="{{=inv?inv.supplier?inv.supplier.id_no?inv.supplier.id_no:supplier.id_no:supplier.id_no:supplier.id_no}}">
+            </div>
+            <div class="six columns">
+              <input class="u-full-width" type="text" placeholder="ИД №" id="client_id_no" value="{{=inv?inv.client?inv.client.id_no?inv.client.id_no:'':'':''}}">
+            </div>
+          </div>
+          <div class="row">
+            <div class="six columns">
+              <input class="u-full-width" type="text" placeholder="М.О.Л." id="supplier_responsible" value="{{=inv?inv.supplier?inv.supplier.responsible?inv.supplier.responsible:supplier.responsible:supplier.responsible:supplier.responsible}}">
+            </div>
+            <div class="six columns">
+              <input class="u-full-width" type="text" placeholder="М.О.Л." id="client_responsible" value="{{=inv?inv.client?inv.client.responsible?inv.client.responsible:'':'':''}}">
+            </div>
+          </div>
+          <div class="row">
+            <div class="twelve columns">&nbsp;</div>
+          </div>
+          <div class="row">
+            <div class="twelve columns">
+              <H3><center>ФАКТУРА</center></H3>
+            </div>
+          </div>
+          <div class="row">
+            <!-- <div class="twelve columns">
+              <H4><center>{{=it.current?it.current.number:"номер"}} / {{=it.current?it.current.date:"дата"}}</center></H4>
+            </div> -->
+            <div class="three columns">&nbsp;</div>
+            <div class="three columns">
+              <input class="u-full-width" type="text" placeholder="Номер" id="number" style="text-align: right;" value="{{=it.current?it.current.number:''}}">
+            </div>
+            <div class="three columns">
+              <input class="u-full-width" type="text" placeholder="Дата" id="date" value="{{=it.current?it.current.date:''}}">
+            </div>
+            <div class="three columns">&nbsp;</div>
+          </div>
+          <div class="row">
+            <div class="twelve columns">
+              <table class="u-full-width">
+                <thead>
+                  <tr>
+                    <th>Наименование&nbsp;на&nbsp;стоката&nbsp;или&nbsp;услугата</th>
+                    <th>Цена</th>
+                    <th>Количество</th>
+                    <th>Мярка</th>
+                    <th>Стойност</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{ it.products = inv?inv.products?inv.products:null:null; }}
+                  {{~it.products :pr :i}}
+                  <tr>
+                    <td><input class="u-full-width" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=i}}" onchange="add_table_row(this)" value="{{=pr.product_name}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=i}}" value="{{=pr.product_price}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=i}}" value="{{=pr.product_quantity}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=i}}" value="{{=pr.product_unit}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=i}}" value="{{=pr.product_amount}}"></td>
+                  </tr>
+                  {{~}}
+                  <tr>
+                    <td><input class="u-full-width" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=it.product_index}}" onchange="add_table_row(this)"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=it.product_index}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=it.product_index}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=it.product_index}}"></td>
+                    <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=it.product_index}}"></td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="4" class="footer-label">Данъчна основа</td>
+                    <td><input class="u-full-width" type="text" id="invoice_subtotal"></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4" class="footer-label">Данък</td>
+                    <td><input class="u-full-width" type="text" id="invoice_tax"></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4" class="footer-label">Сума за плащане</td>
+                    <td><input class="u-full-width" type="text" id="invoice_total" onchange="update_total_amount_verbally();"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="two columns">
+              <label class="inline" for="currency">Валута</label>
+            </div>
+            <div class="ten columns">
+              <select id="currency">
+                <option {{!select_currency('BGN')}} value="BGN">BGN</option>
+                <option {{!select_currency('EUR')}} value="EUR">EUR</option>
+                <option {{!select_currency('USD')}} value="USD">USD</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="two columns">
+              <label class="inline" for="verbally">Словом</label>
+            </div>
+            <div class="ten columns">
+              <input class="u-full-width inline" type="text" id="verbally" value="{{=inv?inv.verbally?inv.verbally:'':''}}">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="four columns">
+              <label class="inline" for="place">Място на сделката</label>
+            </div>
+            <div class="eight columns">
+              <input class="u-full-width inline" type="text" id="place" value="{{=inv?inv.place?inv.place:'':''}}">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="eight columns">
+              <label class="inline" for="due_date">Дата на възникване на данъчното събитие(дата на плащане)</label>
+            </div>
+            <div class="four columns">
+              <input class="u-full-width inline" type="text" id="due_date" value="{{=inv?inv.due_date?inv.due_date:'':''}}">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="four columns">
+              <label class="inline" for="payment_method">Начин на плащане</label>
+            </div>
+            <div class="eight columns">
+              <select id="payment_method">
+                <option {{!select_payment_method('bank_transfer')}} value="bank_transfer">Банков превод</option>
+                <option {{!select_payment_method('credit_card')}} value="credit_card">Карта</option>
+                <option {{!select_payment_method('cash')}} value="cash">Касово</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="twelve columns">
+              <textarea class="u-full-width" placeholder="Детайли за плащането" id="payment_details" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.payment_details?inv.payment_details:data.default_payment_details:data.default_payment_details}}</textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="twelve columns">&nbsp;</div>
+          </div>
+
+          <div class="row">
+            <div class="six columns">
+              <label class="inline" for="created_by">Съставена от</label>
+              <input class="u-full-width inline" type="text" id="created_by" value="{{=inv?inv.created_by?inv.created_by:'Ивайло Цанов':'Ивайло Цанов'}}">
+            </div>
+            <div class="six columns">
+              <label class="inline" for="received_by">Получена от</label>
+              <input class="u-full-width inline" type="text" id="received_by" value="{{=inv?inv.received_by?inv.received_by:'':''}}">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="twelve columns">&nbsp;</div>
+          </div>
+
+          <div class="row">
+            <div class="six columns">
+              <input class="button" type="button" value="Clone">
+            </div>
+            <div class="six columns">
+              <input class="u-pull-right button-primary" type="button" value="Save" onclick="save_invoice(this.form)">
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+</div>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Your page title here :)</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <!-- Javascript
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script src="js/doT.js" type="text/javascript"></script>
+  <script src="js/StringBuffer.js" type="text/javascript"></script>
+  <script src="js/verbally_en.js" type="text/javascript"></script>
+  <script src="js/verbally_bg.js" type="text/javascript"></script>
+  <script src="js/print.js" type="text/javascript"></script>
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+
+  <!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</head>
+<body>
+  <div id="header_container" class="container">
+    <div id="header" class="twelve columns">
+    </div>
+  </div>
+<div id="invoices" class="container">
+    <div id="inv_list_container" class="row">
+      <div id="invoice_list" class="twelve columns">
+      </div>
+    </div>
+  </div>
+  <div id="container" class="container" style="margin-top: 20px;">
+  </div>
+</body>
+
+
+<!-- Templates
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+  <!-- Invoices list Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script id="header_tmpl" type="text/x-dot-template">
+    <a href="#invoice_list" class="non_print"><center>{{=it.current?it.current.number:"номер"}} / {{=it.current?it.current.date:"дата"}}</center></a>
+  </script>
+
+  <!-- Invoices list Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script id="inv_list_tmpl" type="text/x-dot-template">
+    {{~it.invoices :inv}}
+    <div>
+      <a id="inv_{{=inv.number}}" class="inv_link" onclick="show_invoice({{=inv.number}});" href="#">{{=inv.number}} от {{=inv.date}}{{=inv.client?inv.client.name?' - ' + inv.client.name:'':''}}</a>
+    </div>
+    {{~}}
+  </script>
+
+<!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script id="inv_tmpl" type="text/x-dot-template">
+    {{ var inv = it.current; }}
+    {{ var supplier = it.supplier; }}
+    <!-- <div class="row">
+      <div class="twelve columns">
+        <button class="button" onclick="export_data(data)">Export</button>
+        <button class="button-primary" onclick="store_invocies(data)">Persist</button>
+      </div>
+    </div> -->
+    <form onsubmit="return false">
+      <div class="row">
+        <div class="six columns">
+          <label for="supplier_name">Изпълнител:</label>
+          <input class="u-full-width" type="text" placeholder="Име" id="supplier_name" value="{{=inv?inv.supplier?inv.supplier.name?inv.supplier.name:supplier.name:supplier.name:supplier.name}}">
+        </div>
+        <div class="six columns">
+          <label for="client_name">Клиент:</label>
+          <input class="u-full-width" type="text" placeholder="Име" id="client_name" value="{{=inv?inv.client?inv.client.name?inv.client.name:'':'':''}}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="six columns">
+          <textarea class="u-full-width" placeholder="Адрес" id="supplier_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.supplier?inv.supplier.address?inv.supplier.address:supplier.address:supplier.address:supplier.address}}</textarea>
+        </div>
+        <div class="six columns">
+          <textarea class="u-full-width" placeholder="Адрес" id="client_address" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.client?inv.client.address?inv.client.address:'':'':''}}</textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="six columns">
+          <label for="supplier_tax_no" id="supplier_tax_no_label" class="inline print_only">ДДС №:</label>
+          <input class="u-full-width print-inline" type="text" placeholder="ДДС №" id="supplier_tax_no" value="{{=inv?inv.supplier?inv.supplier.tax_no?inv.supplier.tax_no:supplier.tax_no:supplier.tax_no:supplier.tax_no}}">
+        </div>
+        <div class="six columns">
+          <label for="client_tax_no" id="client_tax_no_label" class="inline print_only">ДДС №:</label>
+          <input class="u-full-width print-inline" type="text" placeholder="ДДС №" id="client_tax_no" value="{{=inv?inv.client?inv.client.tax_no?inv.client.tax_no:'':'':''}}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="six columns">
+          <label for="supplier_id_no" id="supplier_id_no_label" class="inline print_only">ИД №:</label>
+          <input class="u-full-width print-inline" type="text" placeholder="ИД №" id="supplier_id_no" value="{{=inv?inv.supplier?inv.supplier.id_no?inv.supplier.id_no:supplier.id_no:supplier.id_no:supplier.id_no}}">
+        </div>
+        <div class="six columns">
+          <label for="client_id_no" id="client_id_no_label" class="inline print_only">ИД №:</label>
+          <input class="u-full-width print-inline" type="text" placeholder="ИД №" id="client_id_no" value="{{=inv?inv.client?inv.client.id_no?inv.client.id_no:'':'':''}}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="six columns">
+          <label for="supplier_responsible" id="supplier_responsible_label" class="inline print_only">М.О.Л.</label>
+          <input class="u-full-width print-inline" type="text" placeholder="М.О.Л." id="supplier_responsible" value="{{=inv?inv.supplier?inv.supplier.responsible?inv.supplier.responsible:supplier.responsible:supplier.responsible:supplier.responsible}}">
+        </div>
+        <div class="six columns">
+          <label for="client_responsible" id="client_responsible_label" class="inline print_only">М.О.Л.</label>
+          <input class="u-full-width print-inline" type="text" placeholder="М.О.Л." id="client_responsible" value="{{=inv?inv.client?inv.client.responsible?inv.client.responsible:'':'':''}}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">&nbsp;</div>
+      </div>
+      <div id="invoice_label_row" class="row non_print">
+        <div class="twelve columns">
+          <H3><center>ФАКТУРА</center></H3>
+        </div>
+      </div>
+      <div id="invoice_number_row" class="row non_print">
+        <div class="three columns">&nbsp;</div>
+        <div class="three columns">
+          <input class="u-full-width" type="text" placeholder="Номер" id="number" style="text-align: right;" value="{{=it.current?it.current.number:''}}">
+        </div>
+        <div class="three columns">
+          <input class="u-full-width" type="text" placeholder="Дата" id="date" value="{{=it.current?it.current.date:''}}">
+        </div>
+        <div class="three columns">
+          <input id="proforma" type="checkbox" {{=it.current?it.current.proforma?"checked":"":""}}>
+          <span class="label-body">Проформа</span>
+        </div>
+      </div>
+      <div id="invoice_label_row_print" class="row print_only">
+        <div class="twelve columns">
+          <H4>{{=it.current?it.current.proforma?"ПРОФОРМА ":"":""}}ФАКТУРА</H4> <H6><span id="number">№ {{=it.current?it.current.number.toString().padStart(10, '0'):''}}</span> от <span id="number">{{=it.current?it.current.date:''}} г.</span></H6>
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">
+          <table class="u-full-width">
+            <thead>
+              <tr>
+                <th><div>Наименование&nbsp;на&nbsp;стоката&nbsp;или&nbsp;услугата</div></th>
+                <th><div>Цена</div></th>
+                <th><div>Количество</div></th>
+                <th><div>Мярка</div></th>
+                <th><div>Стойност</div></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ var last_index = 0; }}
+              {{ it.products = inv?inv.products?inv.products:null:null; }}
+              {{~it.products :pr :i}}
+              <tr>
+                <td>
+                  <input class="u-full-width non_print" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=i}}" onchange="add_table_row(this)" value="{{=pr.product_name}}">
+                  <div class="u-full-width print_only">{{=pr.product_name}}</div>
+                </td>
+                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=i}}" value="{{=pr.product_price}}" onchange="calc_row_amount({{=i}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=i}}" value="{{=pr.product_quantity}}" onchange="calc_row_amount({{=i}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=i}}" value="{{=pr.product_unit}}"></td>
+                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=i}}" value="{{=pr.product_amount}}"></td>
+              </tr>
+              {{ last_index = i+1; }}
+              {{~}}
+              <tr>
+                <td><input class="u-full-width" type="text" placeholder="Наименование на стоката или услугата" id="product_name_{{=last_index}}" onchange="add_table_row(this)"></td>
+                <td><input class="u-full-width" type="text" placeholder="Цена" id="product_price_{{=last_index}}" onchange="calc_row_amount({{=last_index}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Количество" id="product_quantity_{{=last_index}}" onchange="calc_row_amount({{=last_index}})"></td>
+                <td><input class="u-full-width" type="text" placeholder="Мярка" id="product_unit_{{=last_index}}"></td>
+                <td><input class="u-full-width" type="text" placeholder="Стойност" id="product_amount_{{=last_index}}"></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="12"><input class="u-full-width" type="text" placeholder="Проект" id="project" value="{{=inv?inv.project?inv.project:'':''}}"></td>
+              </tr>
+              <tr>
+                <td colspan="4" class="footer-label">Данъчна основа</td>
+                <td><input class="u-full-width" type="text" id="invoice_subtotal" value="{{=inv?inv.invoice_subtotal?inv.invoice_subtotal:'':''}}"></td>
+              </tr>
+              <tr>
+                <td colspan="4" class="footer-label">Данък (%)</td>
+                <td><input class="u-full-width" type="text" id="invoice_tax" onchange="update_amounts()" value="{{=inv?inv.invoice_tax?inv.invoice_tax:'20':'20'}}"></td>
+              </tr>
+              <tr>
+                <td colspan="4" class="footer-label">Сума за плащане</td>
+                <td><input class="u-full-width" type="text" id="invoice_total" onchange="update_total_amount_verbally();" value="{{=inv?inv.invoice_total?inv.invoice_total:'':''}}"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="three columns">
+          <label class="inline" for="currency">Валута</label>
+        </div>
+        <div class="nine columns">
+          <select id="currency">
+            <option {{!select_currency('BGN')}} value="BGN">BGN</option>
+            <option {{!select_currency('EUR')}} value="EUR">EUR</option>
+            <option {{!select_currency('USD')}} value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="three columns">
+          <label class="inline" for="verbally">Словом</label>
+        </div>
+        <div class="nine columns">
+          <input class="u-full-width inline" type="text" id="verbally" value="{{=inv?inv.verbally?inv.verbally:'':''}}">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="three columns">
+          <label class="inline" for="place">Място на сделката</label>
+        </div>
+        <div class="nine columns">
+          <input class="u-full-width inline" type="text" id="place" value="{{=inv?inv.place?inv.place:'':''}}">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="nine columns print-inline">
+          <label class="inline" for="due_date">Дата на възникване на данъчното събитие(дата на плащане)</label>
+        </div>
+        <div class="three columns">
+          <input class="u-full-width inline" type="text" id="due_date" value="{{=inv?inv.due_date?inv.due_date:'':''}}">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="three columns">
+          <label class="inline" for="payment_method">Начин на плащане</label>
+        </div>
+        <div class="nine columns">
+          <select id="payment_method">
+            <option {{!select_payment_method('bank_transfer')}} value="bank_transfer">Банков превод</option>
+            <option {{!select_payment_method('credit_card')}} value="credit_card">Карта</option>
+            <option {{!select_payment_method('cash')}} value="cash">Касово</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="three columns">
+          &nbsp;  
+        </div>
+        <div class="nine columns">
+          <textarea class="u-full-width" placeholder="Детайли за плащането" id="payment_details" style="resize: vertical; overflow-y: hidden; height: auto;" onchange="auto_grow_textarea(this)" oninput="auto_grow_textarea(this)">{{=inv?inv.payment_details?inv.payment_details:data.default_payment_details:data.default_payment_details}}</textarea>
+        </div>
+      </div>
+
+      <div class="row signature-separator">
+        <div class="twelve columns">&nbsp;</div>
+      </div>
+
+      <div class="row">
+        <div class="six columns">
+          <label class="inline" for="created_by">Съставена от</label>
+          <input class="u-full-width inline" type="text" id="created_by" value="{{=inv?inv.created_by?inv.created_by:'Ивайло Цанов':'Ивайло Цанов'}}">
+        </div>
+        <div class="six columns">
+          <label class="inline" for="received_by">Получена от</label>
+          <input class="u-full-width inline" type="text" id="received_by" value="{{=inv?inv.received_by?inv.received_by:'':''}}">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="twelve columns">&nbsp;</div>
+      </div>
+
+      <div id="action_buttons" class="row non_print">
+        <div class="six columns">
+          <input class="button" type="button" value="Clone" onclick="clone_invoice(this.form)">
+          <a href="#invoices" class="button">Invoices</a>
+        </div>
+        <div class="six columns">
+          <input class="u-pull-right button-primary" type="button" value="Save" onclick="save_invoice(this.form)">
+        </div>
+      </div>
+    </form>
+  </script>
+    
+<!-- Functions
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script>
+
+    window.onload = (event) => {
+      auto_grow_textarea(document.getElementById('supplier_address'));
+      auto_grow_textarea(document.getElementById('client_address'));
+      auto_grow_textarea(document.getElementById('payment_details'));
+    }
+
+    function update_amounts() {
+      var i=0;
+      var subtotal = 0;
+      while(document.getElementById('product_name_'+i)) {
+        if(document.getElementById('product_amount_'+i).value)
+          subtotal += parseFloat(document.getElementById('product_amount_'+i).value);
+        i++;
+      }
+      document.getElementById('invoice_subtotal').value = subtotal.toFixed(2);
+      if(document.getElementById('invoice_subtotal').value && document.getElementById('invoice_tax').value) {
+        document.getElementById('invoice_total').value = (parseFloat(document.getElementById('invoice_subtotal').value) * (100 + parseFloat(document.getElementById('invoice_tax').value)) / 100).toFixed(2);
+        update_total_amount_verbally();
+      }
+    }
+
+    function calc_row_amount(i) {
+      if(document.getElementById('product_name_'+i) && document.getElementById('product_price_'+i).value && document.getElementById('product_quantity_'+i).value)
+        document.getElementById('product_amount_'+i).value = (parseFloat(document.getElementById('product_price_'+i).value) * parseFloat(document.getElementById('product_quantity_'+i).value)).toFixed(2);
+      update_amounts();
+    }
+
+    function add_table_row(el) {
+      if(is_last_row(el) && el.value.length) {
+        var row_el = clone_row(el.closest('tr'));
+      }
+    }
+
+    function clone_row(el) {
+      var clone = el.cloneNode(true);
+      el.after(clone);
+      Array.from(clone.cells).forEach((cell, index) => {
+        var component = cell.getElementsByTagName('input')[0];
+        component.id = calc_next_id(component);
+        component.value = "";
+      });
+      return clone;
+    }
+
+    function calc_next_id(el) {
+      var id_arr = el.id.split('_')
+      id_arr.push(parseInt(id_arr.pop())+1);
+      return id_arr.join('_');
+    }
+
+    function is_last_row(el) {
+      return document.getElementById(calc_next_id(el)) == undefined;
+    }
+
+    function update_total_amount_verbally() {
+      document.getElementById('verbally').value = Verbally_bg.convert(document.getElementById('invoice_total').value);
+    }
+
+    function select_currency(option) {
+      return option && data.current && data.current.currency && data.current.currency.toUpperCase() == option.toUpperCase() ? 'selected' : 'ignored';
+    }
+
+    function select_payment_method(option) {
+      return option && data.current && data.current.payment_method && data.current.payment_method.toUpperCase() == option.toUpperCase() ? 'selected' : 'ignored';
+    }
+
+    function mark_selected_invoice (inv_id) {
+      Array.from(document.querySelectorAll('.inv_link.selected')).forEach((el) => el.classList.remove('selected'));
+      document.getElementById('inv_'+inv_id).classList.add('selected');
+    }
+
+    function show_invoice(value) {
+      data.current = data.invoices.find( ({ number }) => number == value );
+      parse_invoices(data);
+      mark_selected_invoice(data.current.number);
+    }
+
+    function get_next_invoice_number() {
+      if (!data.invoices || data.invoices.length === 0) {
+        return 1; // start from 1 if no invoices exist
+      }
+
+      const maxNumber = Math.max(...data.invoices.map(invoice => invoice.number || 0));
+      return maxNumber + 1;
+    }
+
+    function clone_invoice(form) {
+      data.current = null;
+      form.number.value = get_next_invoice_number();
+      form.date.value = new Date().toLocaleDateString('bg-BG');
+    }
+
+    function save_invoice(form) {
+      if(!data.current) {
+        if(data.invoices.find( ({ number }) => number == form.number.value ))
+          console.error("Invoice with this number already exists. Please select it from the list before modifying it!");
+        var new_invoice = {number: form.number.value};
+        data.invoices.push(new_invoice);
+        sort_invoices_desc(data);
+        data.current = new_invoice;
+      }
+      if(!data.current.supplier)
+        data.current.supplier = {};
+      data.current.supplier.name = form.supplier_name.value;
+      data.current.supplier.address = form.supplier_address.value;
+      data.current.supplier.tax_no = form.supplier_tax_no.value;
+      data.current.supplier.id_no = form.supplier_id_no.value;
+      data.current.supplier.responsible = form.supplier_responsible.value;
+      if(!data.current.client)
+        data.current.client = {};
+      data.current.client.name = form.client_name.value;
+      data.current.client.address = form.client_address.value;
+      data.current.client.tax_no = form.client_tax_no.value;
+      data.current.client.id_no = form.client_id_no.value;
+      data.current.client.responsible = form.client_responsible.value;
+      data.current.proforma = form.proforma.checked;
+      data.current.number = form.number.value;  
+      data.current.date = form.date.value;
+      data.current.currency = String(form.currency.value);
+      data.current.verbally = form.verbally.value;
+      data.current.place = form.place.value;
+      data.current.due_date = form.due_date.value;
+      data.current.payment_method = String(form.payment_method.value);
+      data.current.payment_details = form.payment_details.value;
+      data.current.created_by = form.created_by.value;
+      data.current.received_by = form.received_by.value;
+      data.current.products = [];
+      var i = 0;
+      while(form['product_name_'+i]) {
+        if(form['product_name_'+i].value && form['product_price_'+i].value && form['product_quantity_'+i].value && form['product_unit_'+i].value && form['product_amount_'+i].value) {
+          var row = {};
+          row.product_name = form['product_name_'+i].value;
+          row.product_price = form['product_price_'+i].value;
+          row.product_quantity = form['product_quantity_'+i].value;
+          row.product_unit = form['product_unit_'+i].value;
+          row.product_amount = form['product_amount_'+i].value;
+          data.current.products.push(row);
+        }
+        i++;
+      }
+      data.current.project = form.project.value;
+      data.current.invoice_subtotal = form.invoice_subtotal.value;
+      data.current.invoice_tax = form.invoice_tax.value;
+      data.current.invoice_total = form.invoice_total.value;
+
+      console.log(form.currency.value);
+
+      console.log(data.current);
+      data.current = undefined;
+
+      store_invocies(data);
+      data = load_invoices();
+      show_invoice(form.number.value);
+
+      return false;
+    }
+
+    function auto_grow_textarea(textField)
+    {
+      textField.style.height = 'auto';
+      textField.style.height = textField.scrollHeight + "px";
+    }
+
+    function load_company_defaults(data) {
+      data.supplier = {};
+      data.supplier.name = 'ИТ България ООД';
+      data.supplier.address = 'ул. Софроний Врачански №5&#10;Ихтиман, 2050&#10;България';
+      data.supplier.tax_no = 'BG130983696';
+      data.supplier.id_no = '130983696';
+      data.supplier.responsible = 'Ивайло Цанов';
+      data.default_currency = 'BGN';
+      data.default_payment_method = 'bank_transfer';
+      data.default_payment_details = 'Централна Кооперативна Банка&#10;гр. София, ж.к. Красна поляна, бул. Възкресение, бл. 132А&#10;SWIFT: CECBBGSF&#10;IBAN: BG98CECB97901093971500';
+    }
+
+    
+    // local storage
+    // -----------------------
+
+    const STORAGE_NAME = 'IT-Bulgaria Invoices1';
+
+    function sort_invoices_desc(data) {
+      data.invoices.sort(function(a, b) {
+        return b.number - a.number;
+      });
+    }
+
+    function load_invoices() {
+      var data = JSON.parse(localStorage.getItem(STORAGE_NAME));
+
+      // If no data loaded - create new
+      if(!data)
+        data={invoices:[]};
+
+      sort_invoices_desc(data);
+
+      load_company_defaults(data)
+
+      return data;
+    }
+
+    function store_invocies(data) {
+      localStorage.setItem(STORAGE_NAME, JSON.stringify(data));
+    }
+
+    function export_data(data) {
+      window.open(URL.createObjectURL(
+        new File([JSON.stringify(data, undefined, 2)], STORAGE_NAME + ".json", {
+          type: 'data:text/json;charset=utf-8'}
+        )
+      ));
+    }
+
+    function import_data(targetEl, callback) {
+      // disable default drag & drop functionality
+      targetEl.addEventListener('dragenter', function(e){ e.preventDefault(); });
+      targetEl.addEventListener('dragover',  function(e){ e.preventDefault(); });
+
+      targetEl.addEventListener('drop', function(event) {
+
+          var reader = new FileReader();
+          reader.onloadend = function() {
+              var data = JSON.parse(this.result);
+              callback(data);
+          };
+
+          reader.readAsText(event.dataTransfer.files[0]);    
+          event.preventDefault();
+      });
+    }
+  </script>
+
+<!-- Data
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script>
+
+    function load_template (url) {
+      fetch(url /*, options */)
+      .then((response) => response.text())
+      .then((html) => {
+        return html;
+      })
+      .catch((error) => {
+        console.warn(error);
+      });
+    } 
+  
+    var data = load_invoices();
+    // {invoices: [
+    //   {number: 1, date: "01.01.1999"},
+    //   {number: 2, date: "02.02.2000"},
+    //   {number: 4, date: "04.04.2001"},
+    //   {number: 3, date: "03.03.2001"}
+    // ]};
+
+    // data.invoices.push({number:5,date: "05.05.2021"});
+
+    // var new_invoice = {};
+    // new_invoice.number = 6;
+    // new_invoice.date="hello";
+
+    // data.invoices.push(new_invoice);
+
+
+    //data.invoices.push({number:8,date: "08.05.2021"});
+
+    // sort invoices desc
+    data.invoices.sort(function(a, b) {
+      return b.number - a.number;
+    });
+
+    //data.invoices.pop();
+
+    //localStorage.setItem('IT-Bulgaria Invoices', JSON.stringify(data));
+
+    var def = {
+      bank_details: "Централна Кооперативна Банка&#10;гр. София, ж.к. Красна поляна, бул. Възкресение, бл. 132А&#10;SWIFT: CECBBGSF&#10;IBAN: BG98CECB97901093971500"
+    };
+
+    var header_parse_fn = doT.template(document.getElementById('header_tmpl').innerHTML, undefined, def);
+    var list_parse_fn = doT.template(document.getElementById('inv_list_tmpl').innerHTML, undefined, def);
+    var inv_parse_fn = doT.template(document.getElementById('inv_tmpl').innerHTML, undefined, def);
+    function parse_invoices(data) {
+      document.getElementById('header').innerHTML = header_parse_fn(data);
+      document.getElementById('container').innerHTML = inv_parse_fn(data);
+      document.getElementById('invoice_list').innerHTML = list_parse_fn(data);
+      auto_grow_textarea(document.getElementById('supplier_address'));
+      auto_grow_textarea(document.getElementById('client_address'));
+      auto_grow_textarea(document.getElementById('payment_details'));
+    }
+
+    parse_invoices(data);
+
+    import_data(
+      document.body,
+      function(obj) {
+        data = obj;
+        parse_invoices(data);
+      }
+    );    
+
+  </script>
+
+</html>

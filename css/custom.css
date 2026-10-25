@@ -1,0 +1,197 @@
+td input {
+    margin: 0px;    
+}
+
+h3 {
+    margin:     0px;
+}
+
+thead th {
+    border: 0px;
+    padding-bottom: 0px;
+}
+
+tfoot tr td {
+    border: 0px;
+    padding-bottom: 0px;
+}
+
+td, th {
+    padding: 10px 5px;
+}
+
+th > div {
+    background-color: #F0F0F0;
+    padding: 6px 10px;
+}
+
+th{
+    width: 12%;
+}
+th:first-child {
+    width: 52%;
+}
+
+input, textarea, select, fieldset {
+    margin-bottom: 10px;
+  }
+
+input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
+    height: auto;
+}
+
+#proforma {
+    margin-top: 10px;
+}
+  
+.footer-label {
+    text-align: right; 
+    font-weight: bold;    
+}
+
+label.inline {
+    margin-top: 10px;
+}
+
+.inv_link.selected {
+    color: red;
+}
+
+iframe {
+    display: none;
+}
+
+#invoice_list {
+    background-color: lightgray;
+    transition: all 800ms cubic-bezier(0.190, 1.000, 0.560, 1.000);
+    transform: translate3d(0, -100%, 0);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    z-index: 999;
+    height: 100vh;
+}
+
+#invoice_list:target {
+    transform: translate3d(0, 0, 0);
+}
+
+#inv_list_container {
+    position: relative;
+}
+
+#header_container {
+    z-index: 1000;
+    position: sticky;
+    top: 0;
+    background-color: black;
+    color: white;
+}
+
+@media screen {
+    .print_only {display: none;}
+}
+
+
+@media print {
+    @page {
+        size: A3;
+    }
+    .non_print {display: none; }
+    body > * { display: none; }
+    body > form { display: block }
+    body {
+        text-shadow:none;
+        /*zoom: 50%;*/
+        /*transform: scale(.7);*/
+    }
+    h3, h4, h5, H6{
+        display: inline;
+        margin-right: 30px;
+    }
+
+    h4 {
+        font-weight: 500;
+    }
+    H6 {
+        font-size: 1.5em;
+    }
+
+     textarea, select, input[type="text"] {
+        border: none;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+    }
+    div.u-full-width {
+        padding-left: 10px;
+    }
+    th {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    td {
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+    /* td:first-child input {
+        padding-left: 0px;
+    } */
+    tbody > tr:last-child {
+        display: none;
+    }
+    table {
+        margin-bottom: 0px;
+        page-break-inside: avoid;
+    }
+    
+    label.inline {
+        margin-top: 2px;
+        margin-bottom: 0px;
+    }
+    #action_buttons {
+        display: none;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        color: transparent;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        color: transparent;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        color: transparent;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        color: transparent;
+    }
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        -moz-padding-start: 7px;
+    }
+
+    /* #invoice_subtotal, #invoice_tax, #invoice_total {
+        padding: 3px 10px;
+        border: 1px solid #D1D1D1;
+        border-radius: 4px;
+        box-shadow: none;
+        box-sizing: border-box;
+    } */
+
+    .print-inline {
+        width: auto !important;
+    }
+
+    label.inline.print_only {
+        display: inline-block;
+        font-weight: normal;
+    }
+
+    .signature-separator {
+        height: 200px;
+    }
+}
