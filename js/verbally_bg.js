@@ -35,6 +35,15 @@ class Verbally_bg {
 	static CURRENCYx="\u043b\u0435\u0432\u0430"; //����
 	static CURRENCY_HUNDREDS="\u0441\u0442\u043e\u0442\u0438\u043d\u043a\u0430"; //��������
 	static CURRENCY_HUNDREDSx="\u0441\u0442\u043e\u0442\u0438\u043d\u043a\u0438"; //��������
+
+	static _1n="едно"; // neuter, for евро
+
+	// nouns per currency; a neuter currency says едно/две instead of един/два
+	static CURRENCIES={
+		BGN: {one: Verbally_bg.CURRENCY, many: Verbally_bg.CURRENCYx, cent: Verbally_bg.CURRENCY_HUNDREDS, cents: Verbally_bg.CURRENCY_HUNDREDSx, neuter: false},
+		EUR: {one: "евро", many: "евро", cent: "цент", cents: "цента", neuter: true},
+		USD: {one: "долар", many: "долара", cent: "цент", cents: "цента", neuter: false}
+	};
 	
 	static BILLION="\u043c\u0438\u043b\u0438\u0430\u0440\u0434"; //�������
 	static BILLIONS="\u043c\u0438\u043b\u0438\u0430\u0440\u0434\u0430"; //��������
@@ -45,17 +54,19 @@ class Verbally_bg {
 	static THOUSAND="\u0445\u0438\u043b\u044f\u0434\u0430"; //������
 	static THOUSANDS="\u0445\u0438\u043b\u044f\u0434\u0438"; //������
 
-    static convert(value)
+    static convert(value, currency_code)
     {
+        var currency = Verbally_bg.CURRENCIES[currency_code] || Verbally_bg.CURRENCIES.BGN;
         value = Math.round(parseFloat(value)*100)/100;
         var buf=new StringBuffer();
-        Verbally_bg._convert(buf, Math.floor(value), 0);
-        Verbally_bg.footer(buf, value);
+        Verbally_bg._convert(buf, Math.floor(value), 0, currency.neuter);
+        Verbally_bg.footer(buf, value, currency);
         
         return buf.toString();
     }
 
-    static _convert(buf, number, power)
+    // neuter applies only to the units of the top-level call (power 0): едно/две евро
+    static _convert(buf, number, power, neuter)
     {
 		if(number==0)
 		{
@@ -150,10 +161,10 @@ class Verbally_bg {
 		switch(Math.floor(number))
 		{
 			case 1:
-				buf.append(power==3?Verbally_bg._1x:Verbally_bg._1);
+				buf.append(power==3?Verbally_bg._1x:power==0 && neuter?Verbally_bg._1n:Verbally_bg._1);
 				break;
 			case 2:
-				buf.append(power==2 || power==3?Verbally_bg._2x:Verbally_bg._2);
+				buf.append(power==2 || power==3 || power==0 && neuter?Verbally_bg._2x:Verbally_bg._2);
 				break;
 			case 3:
 				buf.append(Verbally_bg._3);
@@ -212,17 +223,17 @@ class Verbally_bg {
 			buf.append(' ');
     }
 
-    static footer(buf, number)
+    static footer(buf, number, currency)
 	{
 		// if(buf.length()>0 && buf.charAt(buf.length()-1)!=' ')
 		// 	buf.append(' ');
 		
-		buf.append(Math.floor(number) == 1 ? Verbally_bg.CURRENCY : Verbally_bg.CURRENCYx).append(' ').append(Verbally_bg.AND).append(' ');
+		buf.append(Math.floor(number) == 1 ? currency.one : currency.many).append(' ').append(Verbally_bg.AND).append(' ');
 
         var cents = Math.round(number*100)%100; // round, not floor: 1.15*100 is 114.999...
 		if(cents<10)
 			buf.append('0');
-		buf.append(cents).append(' ').append(cents == 1 ? Verbally_bg.CURRENCY_HUNDREDS : Verbally_bg.CURRENCY_HUNDREDSx);
+		buf.append(cents).append(' ').append(cents == 1 ? currency.cent : currency.cents);
 	}
 }
 

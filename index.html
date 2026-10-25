@@ -231,7 +231,7 @@
           <label class="inline" for="currency">Валута</label>
         </div>
         <div class="nine columns">
-          <select id="currency">
+          <select id="currency" onchange="update_total_amount_verbally()">
             <option {{!select_currency('BGN')}} value="BGN">BGN</option>
             <option {{!select_currency('EUR')}} value="EUR">EUR</option>
             <option {{!select_currency('USD')}} value="USD">USD</option>
@@ -406,11 +406,15 @@
     }
 
     function update_total_amount_verbally() {
-      document.getElementById('verbally').value = Verbally_bg.convert(document.getElementById('invoice_total').value);
+      var total = document.getElementById('invoice_total').value;
+      if(total)
+        document.getElementById('verbally').value = Verbally_bg.convert(total, document.getElementById('currency').value);
     }
 
+    // saved invoices keep their currency (ones saved without it predate the euro, so BGN); new ones get the default
     function select_currency(option) {
-      return option && data.current && data.current.currency && data.current.currency.toUpperCase() == option.toUpperCase() ? 'selected' : 'ignored';
+      var currency = data.current ? data.current.currency || 'BGN' : data.default_currency;
+      return option && currency.toUpperCase() == option.toUpperCase() ? 'selected' : 'ignored';
     }
 
     function select_payment_method(option) {
@@ -441,6 +445,29 @@
       data.current = null;
       form.number.value = get_next_invoice_number();
       form.date.value = new Date().toLocaleDateString('bg-BG');
+      if(form.currency.value == 'BGN')
+        convert_form_to_eur(form);
+    }
+
+    // fixed rate of the euro changeover on 01.01.2026
+    const BGN_PER_EUR = 1.95583;
+
+    function bgn_to_eur(value) {
+      return isNaN(parseFloat(value)) ? value : round_amount(parseFloat(value) / BGN_PER_EUR).toFixed(2);
+    }
+
+    // converts the product prices of a cloned BGN invoice and recalculates every amount
+    function convert_form_to_eur(form) {
+      form.currency.value = 'EUR';
+      var i = 0;
+      while(form['product_name_'+i]) {
+        if(form['product_price_'+i].value)
+          form['product_price_'+i].value = bgn_to_eur(form['product_price_'+i].value);
+        else if(form['product_amount_'+i].value) // a row with only an amount
+          form['product_amount_'+i].value = bgn_to_eur(form['product_amount_'+i].value);
+        calc_row_amount(i);
+        i++;
+      }
     }
 
     function save_invoice(form) {
@@ -526,7 +553,7 @@
       data.supplier.tax_no = 'BG130983696';
       data.supplier.id_no = '130983696';
       data.supplier.responsible = 'Ивайло Цанов';
-      data.default_currency = 'BGN';
+      data.default_currency = 'EUR';
       data.default_payment_method = 'bank_transfer';
       data.default_payment_details = 'Централна Кооперативна Банка&#10;гр. София, ж.к. Красна поляна, бул. Възкресение, бл. 132А&#10;SWIFT: CECBBGSF&#10;IBAN: BG98CECB97901093971500';
     }
