@@ -59,7 +59,7 @@ class Verbally_en {
         if(number==0)
         {
             if(buf.length()==0)
-                buf.append(Verbally_en._0);
+                buf.append(Verbally_en._0).append(' ');
             
             return;
         }
@@ -203,7 +203,7 @@ class Verbally_en {
 	{
 		buf.append(Verbally_en.CURRENCY).append(' ').append(Verbally_en.AND).append(' ');
 		
-        var cents = Math.floor(number*100%100);
+        var cents = Math.round(number*100)%100; // round, not floor: 1.15*100 is 114.999...
 		if(cents<10)
 			buf.append('0');
 		buf.append(cents).append(' ').append(Verbally_en.CURRENCY_HUNDREDS);
