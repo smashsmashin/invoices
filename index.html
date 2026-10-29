@@ -15,7 +15,9 @@
 
   <!-- FONT
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <!-- Off on purpose: without Raleway the page uses Helvetica/Arial (the next fonts in skeleton.css), which has even digits for invoices -->
+  <!-- <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"> -->
+
 
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -169,11 +171,18 @@
   <!-- Invoices list Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script id="inv_list_tmpl" type="text/x-dot-template">
-    <div class="list_close"><a href="#" onclick="return toggle_invoice_list();">✕ Затвори</a></div>
-    {{~it.invoices :inv}}
-    <div>
-      <a id="inv_{{!inv.number}}" class="inv_link" data-number="{{!inv.number}}" onclick="return open_invoice(this.dataset.number);" href="#">{{!inv.number}} от {{!inv.date}}{{!inv.client?.name ? ' - ' + inv.client.name : ''}}</a>
+    <div class="list_head">
+      <span class="list_title">Фактури ({{=it.invoices.length}})</span>
+      <a href="#" onclick="return toggle_invoice_list();">✕ Затвори</a>
     </div>
+    {{? !it.invoices.length}}<p class="list_empty">Още няма фактури.</p>{{?}}
+    {{~it.invoices :inv}}
+    <a id="inv_{{!inv.number}}" class="inv_link" data-number="{{!inv.number}}" onclick="return open_invoice(this.dataset.number);" href="#">
+      <span class="inv_number">№ {{!inv.number}}</span>
+      <span class="inv_date">{{!without_year_suffix(inv.date || '')}}</span>
+      <span class="inv_client"><span class="inv_client_name">{{!inv.client?.name}}</span>{{? inv.proforma}}<span class="inv_badge">проформа</span>{{?}}</span>
+      <span class="inv_total">{{? inv.invoice_total}}{{!inv.invoice_total}} {{!inv.currency || 'BGN'}}{{?}}</span>
+    </a>
     {{~}}
   </script>
 

@@ -53,16 +53,13 @@ label.inline {
     margin-top: 10px;
 }
 
-.inv_link.selected {
-    color: red;
-}
 
 iframe {
     display: none;
 }
 
 #invoice_list {
-    background-color: lightgray;
+    background-color: #F7F7F7;
     transition: all 800ms cubic-bezier(0.190, 1.000, 0.560, 1.000);
     transform: translate3d(0, -100%, 0);
     position: absolute;
@@ -305,7 +302,90 @@ body.logged_in > #login {
     opacity: 1;
 }
 
-.list_close {
+/* invoices list */
+.list_head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 16px 12px 8px;
+    border-bottom: 2px solid #D1D1D1;
+}
+
+.list_title {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.list_empty {
+    padding: 12px;
+    color: #777;
+}
+
+/* a row per invoice, every row with the same columns */
+.inv_link {
+    display: grid;
+    grid-template-columns: 9em 7em 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 8px 12px;
+    border-bottom: 1px solid #E1E1E1;
+    color: #222;
+    text-decoration: none;
+}
+
+.inv_link:hover {
+    color: #222;
+    background-color: #EAF4FB;
+}
+
+.inv_link.selected {
+    background-color: #DCEEFA;
+    box-shadow: inset 4px 0 0 #1EAEDB;
+    font-weight: 600;
+}
+
+.inv_number, .inv_total {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.inv_date {
+    color: #777;
+}
+
+/* a long client name is shortened with "…", the badge after it always stays whole */
+.inv_client {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+}
+
+.inv_client_name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inv_total {
     text-align: right;
-    padding: 10px 0;
+}
+
+.inv_badge {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background-color: #FFF3CD;
+    color: #8A6D3B;
+    font-size: 1.1rem;
+    font-weight: normal;
+}
+
+@media (max-width: 550px) {
+    .inv_link {
+        grid-template-columns: auto 1fr auto;
+    }
+    .inv_date {
+        display: none;
+    }
 }
