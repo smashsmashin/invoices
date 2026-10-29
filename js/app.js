@@ -32,6 +32,11 @@ enable_drop_import(document.body);
     form_dirty = true;
 }));
 
+document.addEventListener('keydown', (event) => {
+  if(event.key == 'Escape' && invoice_list_open())
+    toggle_invoice_list();
+});
+
 window.addEventListener('beforeunload', (event) => {
   if(form_dirty || session.unsaved)
     event.preventDefault();

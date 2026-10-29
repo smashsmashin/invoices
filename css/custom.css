@@ -304,3 +304,8 @@ body.logged_in > #login {
 #message.visible {
     opacity: 1;
 }
+
+.list_close {
+    text-align: right;
+    padding: 10px 0;
+}

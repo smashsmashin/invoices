@@ -102,6 +102,16 @@ function mark_selected_invoice (inv_id) {
 // true while the form has edits that are not saved yet; parse_invoices() clears it
 var form_dirty = false;
 
+// the list slides in while the address ends in #invoice_list (CSS :target), and out when that is cleared
+function invoice_list_open() {
+  return location.hash == '#invoice_list';
+}
+
+function toggle_invoice_list() {
+  location.hash = invoice_list_open() ? '' : 'invoice_list';
+  return false;
+}
+
 // opening another invoice replaces the form; returning false keeps the list open
 function open_invoice(number) {
   if(form_dirty && !confirm('Има незаписани промени. Да ги загубя ли?'))

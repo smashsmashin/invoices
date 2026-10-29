@@ -6,6 +6,9 @@ their Google account and then unlocks the file with their own password.
 
 ## Running it
 
+The app is published with GitHub Pages at <https://smashsmashin.github.io/invoices/> (see
+[Publishing on GitHub Pages](#publishing-on-github-pages)).
+
 The page has to be opened over `http://` or `https://`. Google sign-in does not work when `index.html` is
 opened straight from disk (`file://`).
 
@@ -17,6 +20,34 @@ python3 -m http.server 8000
 
 then open <http://localhost:8000>.
 
+## Publishing on GitHub Pages
+
+GitHub Pages serves the files of this repository as they are, so there is nothing to build. Do this before the
+Google setup below, which needs the site's address.
+
+1. **Decide on the repository's visibility.** Pages is free for public repositories; a private repository needs
+   a paid GitHub plan (Pro, Team or Enterprise). In a public repository everyone can read the code, including
+   `js/config.js` with the company details and the Google client ID and API key. That is acceptable: those are
+   printed on every invoice or visible to every browser anyway, and the invoices themselves are never in the
+   repository – they live encrypted in Google Drive.
+2. **Jekyll processing is off:** the empty `.nojekyll` file in the repository root tells GitHub to serve every
+   file unchanged instead of running it through the Jekyll site generator. Keep that file.
+
+3. On GitHub open the repository, then **Settings → Pages**. Under **Build and deployment**:
+   - **Source**: *Deploy from a branch*
+   - **Branch**: `main`, folder `/ (root)`, then **Save**.
+4. Wait for the **pages build and deployment** run on the **Actions** tab to finish (a minute or two). The site
+   is then at <https://smashsmashin.github.io/invoices/>. Leave **Enforce HTTPS** ticked.
+5. Add the site to Google: the origin `https://smashsmashin.github.io` in step 4 and the website
+   `https://smashsmashin.github.io/invoices/*` in step 5 of [Setting up Google](#setting-up-google-one-time).
+
+**Updating the site:** every push to `main` publishes again. GitHub caches the files for about 10 minutes, so
+after an update reload the page with Ctrl+Shift+R.
+
+**Own domain (optional):** under **Settings → Pages → Custom domain** enter e.g. `invoices.example.com` and
+create the DNS record GitHub shows. Then use that address in Google instead (steps 3–5), and add the domain under
+**Authorized domains** in step 3.
+
 ## Setting up Google (one time)
 
 The app needs three values from a Google Cloud project, all of which go into `GOOGLE` in `js/config.js`:
@@ -27,8 +58,9 @@ The app needs three values from a Google Cloud project, all of which go into `GO
 | `api_key`               | API key for the Google Picker     | step 5              |
 | `project_number`        | The Cloud project's number        | step 1              |
 
-Below, `https://YOUR-SITE` stands for the address the app is hosted at (scheme, host and port, no path), for
-example `https://invoices.example.com`. Use exactly the address people type into the browser.
+The addresses below are for GitHub Pages and for running the app locally. Note the difference between the
+two kinds of address: a sign-in *origin* (step 4) is only scheme, host and port – `https://smashsmashin.github.io`,
+without `/invoices` – while the API key's *website* (step 5) includes the path.
 
 Google renames console menus from time to time; if a name below does not match, use the search box at the top
 of the console.
@@ -74,7 +106,7 @@ Open **Google Auth Platform** (also reachable as **APIs & Services → OAuth con
 2. **Application type**: *Web application*, name: `Invoices web`.
 3. **Authorized JavaScript origins** – add every address the app is opened from:
    - `http://localhost:8000`
-   - `https://YOUR-SITE`
+   - `https://smashsmashin.github.io`
 
    No path and no trailing slash. **Authorized redirect URIs** stay empty: sign-in happens in a popup.
 4. Create it and copy the **Client ID** (ends in `.apps.googleusercontent.com`) – this is `client_id`.
@@ -86,7 +118,7 @@ A change to the origins can take from a few minutes to a few hours to start work
 1. **APIs & Services → Credentials → Create credentials → API key**, then open the new key to edit it.
 2. **Application restrictions**: *Websites*, and add:
    - `http://localhost:8000/*`
-   - `https://YOUR-SITE/*`
+   - `https://smashsmashin.github.io/invoices/*`
 3. **API restrictions**: *Restrict key* and tick only **Google Picker API**.
 4. Save and copy the key – this is `api_key`.
 
@@ -137,7 +169,9 @@ email again.
 
 | Problem | Cause and fix |
 |---------|---------------|
-| Google shows **Error 400: origin_mismatch** | The address in the browser is not in **Authorized JavaScript origins** (step 4). It must match exactly, including `http`/`https` and the port. |
+| Google shows **Error 400: origin_mismatch** | The address in the browser is not in **Authorized JavaScript origins** (step 4). It must match exactly, including `http`/`https` and the port – and without a path, so `https://smashsmashin.github.io`, not `…/invoices`. |
+| The GitHub Pages site shows **404** | Pages is not switched on for `main` / root (see [Publishing on GitHub Pages](#publishing-on-github-pages)), or the deployment on the **Actions** tab has not finished or failed. |
+| An update does not show up on the site | GitHub caches the files for about 10 minutes; reload with Ctrl+Shift+R. |
 | Google shows **Access blocked** / **403: access_denied** | The app is in **Testing** and this account is not a test user (step 3). |
 | The file picker says the **API developer key is invalid** | The API key does not allow this website or the Picker API (step 5), or the Picker API is not enabled (step 2). |
 | "Не е разрешен достъпът до Google Drive…" | A permission box was unticked on Google's consent screen. Sign in again and leave all boxes ticked. |

@@ -70,7 +70,7 @@
   <!-- Invoices list Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script id="header_tmpl" type="text/x-dot-template">
-    <a href="#invoice_list" class="non_print"><center>{{!it.current?.number || 'номер'}} / {{!it.current?.date || 'дата'}}</center></a>
+    <a href="#invoice_list" class="non_print" onclick="return toggle_invoice_list();"><center>{{!it.current?.number || 'номер'}} / {{!it.current?.date || 'дата'}}</center></a>
     {{ var status = sync_status(); }}
     <div class="non_print sync_status{{=status.problem?' problem':''}}">
       <center>
@@ -169,6 +169,7 @@
   <!-- Invoices list Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script id="inv_list_tmpl" type="text/x-dot-template">
+    <div class="list_close"><a href="#" onclick="return toggle_invoice_list();">✕ Затвори</a></div>
     {{~it.invoices :inv}}
     <div>
       <a id="inv_{{!inv.number}}" class="inv_link" data-number="{{!inv.number}}" onclick="return open_invoice(this.dataset.number);" href="#">{{!inv.number}} от {{!inv.date}}{{!inv.client?.name ? ' - ' + inv.client.name : ''}}</a>
