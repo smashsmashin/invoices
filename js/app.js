@@ -1,4 +1,5 @@
-// Page start-up: compiles the templates in index.html and renders the saved invoices.
+// Page start-up: compiles the templates in index.html and shows the login screen;
+// the invoices are rendered once the login succeeds (login.js).
 // Loaded at the end of the page, after the templates.
 
 var header_parse_fn = doT.template(document.getElementById('header_tmpl').innerHTML);
@@ -19,9 +20,9 @@ function parse_invoices(data) {
   auto_grow_textarea(document.getElementById('payment_details'));
 }
 
-var data = load_invoices();
+var data = {invoices: []};
 
-parse_invoices(data);
+start_login();
 
 enable_drop_import(document.body);
 
@@ -32,7 +33,7 @@ enable_drop_import(document.body);
 }));
 
 window.addEventListener('beforeunload', (event) => {
-  if(form_dirty)
+  if(form_dirty || session.unsaved)
     event.preventDefault();
 });
 

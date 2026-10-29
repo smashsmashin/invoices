@@ -172,6 +172,8 @@ function read_product_rows(form) {
 }
 
 function save_invoice(form) {
+  if(!can_edit())
+    return false;
   var number = form.number.value.trim();
   if(!number) {
     alert('Въведете номер на фактурата.');

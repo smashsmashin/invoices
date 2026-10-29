@@ -30,6 +30,8 @@
   <script src="js/verbally_bg.js" type="text/javascript"></script>
   <script src="js/config.js" type="text/javascript"></script>
   <script src="js/calculations.js" type="text/javascript"></script>
+  <script src="js/crypto.js" type="text/javascript"></script>
+  <script src="js/drive.js" type="text/javascript"></script>
   <script src="js/storage.js" type="text/javascript"></script>
   <script src="js/invoice_form.js" type="text/javascript"></script>
   <script src="js/print.js" type="text/javascript"></script>
@@ -43,6 +45,10 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 </head>
 <body>
+  <div id="login" class="container">
+  </div>
+  <div id="dialog" class="hidden">
+  </div>
   <div id="header_container" class="container">
     <div id="header" class="twelve columns">
     </div>
@@ -65,9 +71,98 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script id="header_tmpl" type="text/x-dot-template">
     <a href="#invoice_list" class="non_print"><center>{{!it.current?.number || 'номер'}} / {{!it.current?.date || 'дата'}}</center></a>
-    {{ var backup = backup_status(it); }}
-    <div class="non_print backup_status{{=backup.overdue?' overdue':''}}">
-      <center>{{!backup.text}}{{? backup.overdue}} — {{? backup.last_export}}има промени след него, {{?}}<a href="#" onclick="export_data(data); return false;">изтеглете архив</a>{{?}}</center>
+    {{ var status = sync_status(); }}
+    <div class="non_print sync_status{{=status.problem?' problem':''}}">
+      <center>
+        {{!status.text}}{{? status.action}} <a href="#" onclick="sync_status_action(); return false;">{{!status.action}}</a>{{?}}
+        <span class="session_links">{{!session.email}} · <a href="#" onclick="return open_people_dialog();">Достъп</a> · <a href="#" onclick="return logout();">Изход</a></span>
+      </center>
+    </div>
+  </script>
+
+  <!-- Login screen: Google account, shared file, password
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script id="login_tmpl" type="text/x-dot-template">
+    <div class="login_box">
+      <h4>Фактури - ИТ България</h4>
+      {{? it.error}}<p class="login_error">{{!it.error}}</p>{{?}}
+      {{? it.busy}}
+      <p>Моля, изчакайте…</p>
+      {{?? it.step == 'loading'}}
+      {{? !it.error}}<p>Зареждане…</p>{{?}}
+      {{?? it.step == 'google'}}
+      <p>Влезте с Google профила, с който е споделен файлът с фактурите.</p>
+      <input class="button-primary" type="button" value="Вход с Google" onclick="login_with_google()">
+      {{ var legacy_count = legacy_invoices().length; }}
+      {{? legacy_count}}
+      <p class="login_note">В този браузър има {{=legacy_count}} фактури от старата версия (без Google Drive).
+        <a href="#" onclick="export_data({invoices: legacy_invoices()}); return false;">Изтеглете ги като файл</a>, за да ги внесете след входа с бутона Import.</p>
+      {{?}}
+      {{?? it.step == 'file'}}
+      <p>Влезли сте като <b>{{!session.email}}</b>. Изберете споделения файл с фактурите (<i>{{!DRIVE_FILE_NAME}}</i>) от Google Drive. Това е нужно само веднъж.</p>
+      <input class="button-primary" type="button" value="Избери файла" onclick="choose_store_file()">
+      <p class="login_note">Първи път ли започвате? <a href="#" onclick="show_login_step('create'); return false;">Създайте нов файл с фактури</a>.
+        Ако сте влезли с грешен профил, <a href="#" onclick="return logout();">излезте</a>.</p>
+      {{?? it.step == 'password'}}
+      <form onsubmit="submit_password(this); return false;">
+        <label for="login_password">Парола за <b>{{!session.email}}</b></label>
+        <input class="u-full-width" type="password" id="login_password" name="password" autocomplete="current-password" required>
+        <input class="button-primary" type="submit" value="Вход">
+      </form>
+      <p class="login_note"><a href="#" onclick="show_login_step('file'); return false;">Друг файл</a> · <a href="#" onclick="return logout();">Изход</a></p>
+      {{?? it.step == 'new_password'}}
+      <form onsubmit="submit_new_password(this); return false;">
+        <p>Влязохте с временна парола. Задайте своя парола (поне {{=MIN_PASSWORD_LENGTH}} знака). Ако я забравите, друг човек с достъп може да ви даде нова временна.</p>
+        <label for="new_password">Нова парола</label>
+        <input class="u-full-width" type="password" id="new_password" name="password" autocomplete="new-password" required>
+        <label for="new_password_repeat">Повторете паролата</label>
+        <input class="u-full-width" type="password" id="new_password_repeat" name="repeat" autocomplete="new-password" required>
+        <input class="button-primary" type="submit" value="Запази и влез">
+      </form>
+      {{?? it.step == 'create'}}
+      {{ var count = legacy_invoices().length; }}
+      <form onsubmit="create_store_file(this); return false;">
+        <p>Ще бъде създаден нов шифрован файл в Google Drive на <b>{{!session.email}}</b>{{? count}} с {{=count}} фактури от този компютър (след това те ще бъдат изтрити от браузъра){{?}}.
+          Други хора се добавят после от бутона „Достъп“.</p>
+        <p class="login_note">Ако паролите на всички бъдат забравени, данните не могат да бъдат възстановени. Пазете и архив (бутон Export).</p>
+        <label for="create_password">Парола (поне {{=MIN_PASSWORD_LENGTH}} знака)</label>
+        <input class="u-full-width" type="password" id="create_password" name="password" autocomplete="new-password" required>
+        <label for="create_password_repeat">Повторете паролата</label>
+        <input class="u-full-width" type="password" id="create_password_repeat" name="repeat" autocomplete="new-password" required>
+        <input class="button-primary" type="submit" value="Създай">
+        <input class="button" type="button" value="Назад" onclick="show_login_step('file')">
+      </form>
+      {{?}}
+    </div>
+  </script>
+
+  <!-- Access dialog: who can open the file, and changing your own password
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script id="people_tmpl" type="text/x-dot-template">
+    <div class="dialog_box">
+      <a href="#" class="u-pull-right" onclick="return close_people_dialog();">Затвори</a>
+      <h5>Достъп до фактурите</h5>
+      <table class="u-full-width">
+        {{~it.people :person}}
+        <tr>
+          <td>{{!person.email}}{{? person.email == it.me}} (вие){{?}}{{? person.temp}} <i>- с временна парола</i>{{?}}</td>
+          <td>{{? person.email != it.me}}<a href="#" data-email="{{!person.email}}" onclick="remove_person(this.dataset.email); return false;">Премахни</a>{{?}}</td>
+        </tr>
+        {{~}}
+      </table>
+      <form onsubmit="add_person(this); return false;">
+        <h6>Добавяне на човек</h6>
+        <p class="login_note">Google профилът му ще получи достъп до файла; временната парола му я кажете по друг път.</p>
+        <input class="u-full-width" type="email" name="email" placeholder="Имейл на Google профила" required>
+        <input class="u-full-width" type="text" name="password" placeholder="Временна парола (поне {{=MIN_PASSWORD_LENGTH}} знака)" autocomplete="off" required>
+        <input class="button" type="submit" value="Добави">
+      </form>
+      <form onsubmit="change_password(this); return false;">
+        <h6>Смяна на моята парола</h6>
+        <input class="u-full-width" type="password" name="password" placeholder="Нова парола" autocomplete="new-password" required>
+        <input class="u-full-width" type="password" name="repeat" placeholder="Повторете паролата" autocomplete="new-password" required>
+        <input class="button" type="submit" value="Смени">
+      </form>
     </div>
   </script>
 
@@ -327,6 +422,7 @@
     
 <!-- Start-up
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script src="js/login.js" type="text/javascript"></script>
   <script src="js/app.js" type="text/javascript"></script>
 
 </html>
